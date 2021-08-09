@@ -1,0 +1,8 @@
+appdirs
+click
+hat-aio
+hat-chatter
+hat-json
+hat-juggler
+hat-sbs
+hat-util
