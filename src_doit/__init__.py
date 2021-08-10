@@ -1,11 +1,16 @@
 from pathlib import Path
 import subprocess
-import sys
 import tempfile
 
 from hat import json
 from hat import sbs
 from hat.doit import common
+from hat.doit.py import (build_wheel,
+                         run_pytest,
+                         run_flake8)
+from hat.doit.docs import (SphinxOutputType,
+                           build_sphinx,
+                           build_pdoc)
 
 
 __all__ = ['task_clean_all',
@@ -41,14 +46,15 @@ def task_clean_all():
     """Clean all"""
     return {'actions': [(common.rm_rf, [build_dir,
                                         ui_dir,
-                                        json_schema_repo_path])]}
+                                        json_schema_repo_path,
+                                        sbs_repo_path])]}
 
 
 def task_build():
     """Build"""
 
     def build():
-        common.wheel_build(
+        build_wheel(
             src_dir=src_py_dir,
             dst_dir=build_py_dir,
             src_paths=list(common.path_rglob(src_py_dir,
@@ -68,22 +74,13 @@ def task_build():
 
 def task_check():
     """Check with flake8"""
-    return {'actions': [(_run_flake8, [src_py_dir]),
-                        (_run_flake8, [pytest_dir])]}
+    return {'actions': [(run_flake8, [src_py_dir]),
+                        (run_flake8, [pytest_dir])]}
 
 
 def task_test():
     """Test"""
-
-    def run(args):
-        common.mkdir_p(ui_dir)
-        subprocess.run([sys.executable, '-m', 'pytest',
-                        '-s', '-p', 'no:cacheprovider',
-                        *(args or [])],
-                       cwd=str(pytest_dir),
-                       check=True)
-
-    return {'actions': [run],
+    return {'actions': [lambda args: run_pytest(pytest_dir, *(args or []))],
             'pos_arg': 'args',
             'task_dep': ['json_schema_repo',
                          'sbs_repo']}
@@ -91,19 +88,11 @@ def task_test():
 
 def task_docs():
     """Docs"""
-
-    def build():
-        common.sphinx_build(common.SphinxOutputType.HTML, docs_dir,
-                            build_docs_dir)
-        subprocess.run([sys.executable, '-m', 'pdoc',
-                        '--html', '--skip-errors', '-f',
-                        '-o', str(build_docs_dir / 'py_api'),
-                        'hat.monitor'],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
-
-    return {'actions': [build],
+    return {'actions': [(build_sphinx, [SphinxOutputType.HTML,
+                                        docs_dir,
+                                        build_docs_dir]),
+                        (build_pdoc, ['hat.monitor',
+                                      build_docs_dir / 'py_api'])],
             'task_dep': ['ui',
                          'json_schema_repo',
                          'sbs_repo']}
@@ -165,11 +154,6 @@ def task_sbs_repo():
             'targets': [sbs_repo_path]}
 
 
-def _run_flake8(path):
-    subprocess.run([sys.executable, '-m', 'flake8', str(path)],
-                   check=True)
-
-
 _webpack_conf = r"""
 module.exports = {{
     mode: 'none',
@@ -185,7 +169,7 @@ module.exports = {{
                 use: [
                     "style-loader",
                     {{
-                        "loader": "css-loader",
+                        loader: "css-loader",
                         options: {{url: false}}
                     }},
                     {{
