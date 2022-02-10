@@ -7,9 +7,6 @@ from hat.monitor.server import common
 import hat.monitor.server.master
 
 
-pytestmark = pytest.mark.asyncio
-
-
 @pytest.fixture
 def master_port():
     return util.get_unused_tcp_port()

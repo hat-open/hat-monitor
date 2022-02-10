@@ -10,7 +10,6 @@ from test_sys import common
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_ui_malformed_message(monitor_factory):
     monitor = monitor_factory()
     incorrect_ui_client = await hat.juggler.connect(
@@ -31,7 +30,6 @@ async def test_ui_malformed_message(monitor_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_ui_incorrect_type(cluster_factory):
     cluster = await cluster_factory({
         'group': {
@@ -57,7 +55,6 @@ async def test_ui_incorrect_type(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_ui_incorrect_cid_mid(cluster_factory):
     cluster = await cluster_factory({
         'group': {
@@ -87,7 +84,6 @@ async def test_ui_incorrect_cid_mid(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_component_malformed_message(monitor_factory):
     monitor = monitor_factory()
     sbs_repo = hat.sbs.Repository(

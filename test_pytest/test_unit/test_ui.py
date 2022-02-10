@@ -8,9 +8,6 @@ from hat.monitor.server import common
 import hat.monitor.server.ui
 
 
-pytestmark = pytest.mark.asyncio
-
-
 @pytest.fixture
 def ui_port():
     return util.get_unused_tcp_port()

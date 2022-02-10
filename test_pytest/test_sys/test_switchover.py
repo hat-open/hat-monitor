@@ -40,7 +40,6 @@ def test_switch_on_parent_kill(monitor_factory, revived_monitor_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_lose_blessing_when_lower_rank_connects(cluster_factory):
     group_name = 'group'
     cluster1 = await cluster_factory({
@@ -99,7 +98,6 @@ async def test_lose_blessing_when_lower_rank_connects(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_gain_blessing_when_blessed_disconnects(cluster_factory):
     group_name = 'group'
     cluster = await cluster_factory({
@@ -144,7 +142,6 @@ async def test_gain_blessing_when_blessed_disconnects(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_rank_change_switchover(cluster_factory):
     group_name = 'group'
     cluster = await cluster_factory({

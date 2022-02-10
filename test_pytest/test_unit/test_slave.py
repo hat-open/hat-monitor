@@ -11,9 +11,6 @@ import hat.monitor.server.slave
 import hat.monitor.server.master
 
 
-pytestmark = pytest.mark.asyncio
-
-
 @pytest.fixture
 def primary_port():
     return util.get_unused_tcp_port()

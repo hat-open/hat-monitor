@@ -18,7 +18,6 @@ def test_server_listens(monitor_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_single_component(monitor_factory, component_factory,
                                 ui_client_factory):
     server_info = monitor_factory()
@@ -78,7 +77,6 @@ async def test_single_component(monitor_factory, component_factory,
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_bless_all(cluster_factory):
     cluster = await cluster_factory({
         'g1': {'components': ['c1', 'c2']},
@@ -153,7 +151,6 @@ async def test_bless_all(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_bless_one(cluster_factory):
     cluster = await cluster_factory({
         'group': {
@@ -233,7 +230,6 @@ async def test_bless_one(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_bless_all_group_setting(cluster_factory):
     cluster = await cluster_factory({
         'group': {
@@ -292,7 +288,6 @@ async def test_bless_all_group_setting(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_bless_one_group_setting(cluster_factory):
     cluster = await cluster_factory(group_conf={
         'redundant': {
@@ -381,7 +376,6 @@ def test_master_slave(monitor_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_peers_bless_all(cluster_factory):
     group_name = 'group'
     c1_name = 'c1'
@@ -450,7 +444,6 @@ async def test_peers_bless_all(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_peers_bless_one(cluster_factory):
     group_name = 'group'
     c1_name = 'c1'
@@ -555,7 +548,6 @@ async def test_peers_bless_one(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_peers_bless_all_group(cluster_factory):
     group_name = 'group'
     c1_name = 'c1'
@@ -629,7 +621,6 @@ async def test_peers_bless_all_group(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 async def test_peers_bless_one_group(cluster_factory):
     group_name = 'group'
     c1_name = 'c1'
@@ -733,7 +724,6 @@ async def test_peers_bless_one_group(cluster_factory):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 @pytest.mark.parametrize('cluster_confs', [
     [{
         'groups': {
@@ -828,7 +818,6 @@ async def test_bless_all_behavior(cluster_factory, cluster_confs):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.asyncio
 @pytest.mark.parametrize('cluster_confs', [
     [{
         'groups': {
