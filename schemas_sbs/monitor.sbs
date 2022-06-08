@@ -3,7 +3,7 @@ module HatMonitor
 MsgClient = Tuple {
     name:       String
     group:      String
-    address:    Maybe(String)
+    data:       String
     ready:      Maybe(Integer)
 }
 
@@ -27,8 +27,13 @@ ComponentInfo = Tuple {
     mid:        Integer
     name:       Maybe(String)
     group:      Maybe(String)
-    address:    Maybe(String)
+    data:       String
     rank:       Integer
-    blessing:   Maybe(Integer)
+    blessing:   Maybe(Blessing)
     ready:      Maybe(Integer)
+}
+
+Blessing = Tuple {
+    token:     Integer
+    timestamp: Float
 }

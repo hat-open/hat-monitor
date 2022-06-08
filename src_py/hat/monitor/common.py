@@ -19,21 +19,27 @@ sbs_repo: sbs.Repository = sbs.Repository(
     sbs.Repository.from_json(package_path / 'sbs_repo.json'))
 
 
+class Blessing(typing.NamedTuple):
+    token: int
+    timestamp: float
+
+
 class ComponentInfo(typing.NamedTuple):
     cid: int
     mid: int
     name: typing.Optional[str]
     group: typing.Optional[str]
-    address: typing.Optional[str]
+    data: json.Data
     rank: int
-    blessing: typing.Optional[int]
+    blessing: typing.Optional[Blessing]
     ready: typing.Optional[int]
+    """None indicates component is not ready. 0 is initial value when ready"""
 
 
 class MsgClient(typing.NamedTuple):
     name: str
     group: str
-    address: typing.Optional[str]
+    data: json.Data
     ready: typing.Optional[int]
 
 
