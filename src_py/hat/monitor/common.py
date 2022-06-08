@@ -20,8 +20,13 @@ sbs_repo: sbs.Repository = sbs.Repository(
 
 
 class Blessing(typing.NamedTuple):
-    token: int
-    timestamp: float
+    token: typing.Optional[int]
+    timestamp: typing.Optional[float]
+
+
+class Ready(typing.NamedTuple):
+    token: typing.Optional[int]
+    enabled: bool
 
 
 class ComponentInfo(typing.NamedTuple):
@@ -31,16 +36,15 @@ class ComponentInfo(typing.NamedTuple):
     group: typing.Optional[str]
     data: json.Data
     rank: int
-    blessing: typing.Optional[Blessing]
-    ready: typing.Optional[int]
-    """None indicates component is not ready. 0 is initial value when ready"""
+    blessing: Blessing
+    ready: Ready
 
 
 class MsgClient(typing.NamedTuple):
     name: str
     group: str
     data: json.Data
-    ready: typing.Optional[int]
+    ready: Ready
 
 
 class MsgServer(typing.NamedTuple):
@@ -49,16 +53,40 @@ class MsgServer(typing.NamedTuple):
     components: typing.List[ComponentInfo]
 
 
+def blessing_to_sbs(blessing: Blessing) -> sbs.Data:
+    """Convert blessing to SBS data"""
+    return {'token': _value_to_sbs_maybe(blessing.token),
+            'timestamp': _value_to_sbs_maybe(blessing.timestamp)}
+
+
+def blessing_from_sbs(data: sbs.Data) -> Blessing:
+    """Convert SBS data to blessing"""
+    return Blessing(token=_value_from_sbs_maybe(data['token']),
+                    timestamp=_value_from_sbs_maybe(data['timestamp']))
+
+
+def ready_to_sbs(ready: Ready) -> sbs.Data:
+    """Convert ready to SBS data"""
+    return {'token': _value_to_sbs_maybe(ready.token),
+            'enabled': ready.enabled}
+
+
+def ready_from_sbs(data: sbs.Data) -> Blessing:
+    """Convert SBS data to ready"""
+    return Blessing(token=_value_from_sbs_maybe(data['token']),
+                    enabled=data['enabled'])
+
+
 def component_info_to_sbs(info: ComponentInfo) -> sbs.Data:
     """Convert component info to SBS data"""
     return {'cid': info.cid,
             'mid': info.mid,
             'name': _value_to_sbs_maybe(info.name),
             'group': _value_to_sbs_maybe(info.group),
-            'address': _value_to_sbs_maybe(info.address),
+            'data': json.encode(info.data),
             'rank': info.rank,
-            'blessing': _value_to_sbs_maybe(info.blessing),
-            'ready': _value_to_sbs_maybe(info.ready)}
+            'blessing': blessing_to_sbs(info.blessing),
+            'ready': ready_to_sbs(info.ready)}
 
 
 def component_info_from_sbs(data: sbs.Data) -> ComponentInfo:
@@ -67,26 +95,26 @@ def component_info_from_sbs(data: sbs.Data) -> ComponentInfo:
                          mid=data['mid'],
                          name=_value_from_sbs_maybe(data['name']),
                          group=_value_from_sbs_maybe(data['group']),
-                         address=_value_from_sbs_maybe(data['address']),
+                         data=json.decode(data['data']),
                          rank=data['rank'],
-                         blessing=_value_from_sbs_maybe(data['blessing']),
-                         ready=_value_from_sbs_maybe(data['ready']))
+                         blessing=blessing_from_sbs(data['blessing']),
+                         ready=ready_from_sbs(data['ready']))
 
 
 def msg_client_to_sbs(msg: MsgClient) -> sbs.Data:
     """Convert MsgClient to SBS data"""
     return {'name': msg.name,
             'group': msg.group,
-            'address': _value_to_sbs_maybe(msg.address),
-            'ready': _value_to_sbs_maybe(msg.ready)}
+            'data': json.encode(msg.data),
+            'ready': ready_to_sbs(msg.ready)}
 
 
 def msg_client_from_sbs(data: sbs.Data) -> MsgClient:
     """Convert SBS data to MsgClient"""
     return MsgClient(name=data['name'],
                      group=data['group'],
-                     address=_value_from_sbs_maybe(data['address']),
-                     ready=_value_from_sbs_maybe(data['ready']))
+                     data=json.decode(data['data']),
+                     ready=ready_from_sbs(data['ready']))
 
 
 def msg_server_to_sbs(msg: MsgServer) -> sbs.Data:

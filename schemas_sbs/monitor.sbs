@@ -1,39 +1,44 @@
 module HatMonitor
 
 MsgClient = Tuple {
-    name:       String
-    group:      String
-    data:       String
-    ready:      Maybe(Integer)
+    name:   String
+    group:  String
+    data:   String
+    ready:  Ready
 }
 
 MsgServer = Tuple {
-    cid:        Integer
-    mid:        Integer
-    components: Array(ComponentInfo)
+    cid:         Integer
+    mid:         Integer
+    components:  Array(ComponentInfo)
 }
 
 MsgSlave = Tuple {
-    components: Array(ComponentInfo)
+    components:  Array(ComponentInfo)
 }
 
 MsgMaster = Tuple {
-    mid:        Integer
-    components: Array(ComponentInfo)
+    mid:         Integer
+    components:  Array(ComponentInfo)
 }
 
 ComponentInfo = Tuple {
-    cid:        Integer
-    mid:        Integer
-    name:       Maybe(String)
-    group:      Maybe(String)
-    data:       String
-    rank:       Integer
-    blessing:   Maybe(Blessing)
-    ready:      Maybe(Integer)
+    cid:       Integer
+    mid:       Integer
+    name:      Maybe(String)
+    group:     Maybe(String)
+    data:      String
+    rank:      Integer
+    blessing:  Blessing
+    ready:     Ready
 }
 
 Blessing = Tuple {
-    token:     Integer
-    timestamp: Float
+    token:      Maybe(Integer)
+    timestamp:  Maybe(Float)
+}
+
+Ready = Tuple {
+    token:    Maybe(Integer)
+    enabled:  Boolean
 }

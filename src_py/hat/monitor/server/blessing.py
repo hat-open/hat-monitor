@@ -1,22 +1,18 @@
 """Implementation of blessing calculation algorithms"""
 
-import enum
+import itertools
+import time
 import typing
 
 from hat.monitor.server import common
 
 
-Algorithm = enum.Enum('Algorithm', [
-    'BLESS_ALL',
-    'BLESS_ONE'])
-
-
-_last_token_id = 0
+_next_tokens = itertools.count(1)
 
 
 def calculate(components: typing.List[common.ComponentInfo],
-              group_algorithms: typing.Dict[str, Algorithm],
-              default_algorithm: Algorithm
+              group_algorithms: typing.Dict[str, common.Algorithm],
+              default_algorithm: common.Algorithm
               ) -> typing.List[common.ComponentInfo]:
     """Calculate blessing
 
@@ -44,30 +40,27 @@ def calculate(components: typing.List[common.ComponentInfo],
 
 
 def _calculate_group(algorithm, components):
-    if algorithm == Algorithm.BLESS_ALL:
+    if algorithm == common.Algorithm.BLESS_ALL:
         return _bless_all(components)
 
-    if algorithm == Algorithm.BLESS_ONE:
+    if algorithm == common.Algorithm.BLESS_ONE:
         return _bless_one(components)
 
     raise ValueError('unsupported algorithm')
 
 
 def _bless_all(components):
-    global _last_token_id
-
     for c in components:
-        if c.blessing is not None:
+        if c.blessing.token is not None:
             yield c
 
         else:
-            _last_token_id += 1
-            yield c._replace(blessing=_last_token_id)
+            blessing = common.Blessing(token=next(_next_tokens),
+                                       timestamp=time.now())
+            yield c._replace(blessing=blessing)
 
 
 def _bless_one(components):
-    global _last_token_id
-
     highlander = None
     ready_exist = False
     for c in components:
@@ -87,8 +80,11 @@ def _bless_one(components):
 
     for c in components:
         if c != highlander:
-            c = c._replace(blessing=None)
-        elif not c.blessing:
-            _last_token_id += 1
-            c = c._replace(blessing=_last_token_id)
+            blessing = common.Blessing(token=None,
+                                       timestamp=None)
+            c = c._replace(blessing=blessing)
+        elif c.blessing.token is None:
+            blessing = common.Blessing(token=next(_next_tokens),
+                                       timestamp=time.now())
+            c = c._replace(blessing=blessing)
         yield c

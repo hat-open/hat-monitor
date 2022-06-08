@@ -9,41 +9,46 @@ connection is signaled with `Client.wait_closed`.
 
 Example of low-level interface usage::
 
-    client = await hat.monitor.client.connect({
-        'name': 'client1',
-        'group': 'group1',
-        'monitor_address': 'tcp+sbs://127.0.0.1:23010',
-        'component_address': None})
-    assert client.info in client.components
+    def on_state_change():
+        print(f"current global state: {client.components}")
+
+    conf = {'name': 'client1',
+            'group': 'group1',
+            'monitor_address': 'tcp+sbs://127.0.0.1:23010'}
+    client = await hat.monitor.client.connect(conf)
     try:
-        await client.wait_closed()
+        with client.register_change_cb(on_state_change):
+            await client.wait_closed()
     finally:
         await client.async_close()
 
 `Component` provide high-level interface for communication with
-Monitor Server. Component, listens to client changes and in regard to blessing
-and ready tokens calls or cancels `async_run_cb` callback. In case component is
-enabled and blessing token matches ready token, `async_run_cb` is called.
-While `async_run_cb` is running, once enable state or blessing token changes,
-`async_run_cb` is canceled. If `async_run_cb` finishes or raises exception or
+Monitor Server. Component, listens to client changes and, in regard to blessing
+and ready, calls or cancels `run_cb` callback. In case component is
+ready enabled and blessing token matches ready token, `run_cb` is called.
+While `run_cb` is running, once ready enable or blessing token changes,
+`run_cb` is canceled. If `run_cb` finishes or raises exception or
 connection to monitor server is closed, component is closed.
 
 Example of high-level interface usage::
 
-    async def monitor_async_run(_, f):
-        await asyncio.sleep(10)
-        f.set_result(13)
+    async def run_component(component):
+        print("running component")
+        try:
+            await asyncio.Future()
+        finally:
+            print("stopping component")
 
-    client = await hat.monitor.client.connect({
-        'name': 'client',
-        'group': 'test clients',
-        'monitor_address': 'tcp+sbs://127.0.0.1:23010',
-        'component_address': None})
-    f = asyncio.Future()
-    component = Component(client, monitor_async_run, f)
-    component.set_enabled(True)
-    res = await f
-    assert res == 13
+    conf = {'name': 'client',
+            'group': 'test clients',
+            'monitor_address': 'tcp+sbs://127.0.0.1:23010'}
+    client = await hat.monitor.client.connect(conf)
+    component = Component(client, run_component)
+    component.set_ready_enabled(True)
+    try:
+        await component.wait_closed()
+    finally:
+        await component.async_close()
 
 """
 
@@ -61,8 +66,17 @@ from hat.monitor import common
 mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
 
+RunCb = typing.Callable[..., typing.Awaitable]
+"""Component run callback coroutine
 
-async def connect(conf: json.Data
+First argument is component instance and remaining arguments are one provided
+during component initialization.
+
+"""
+
+
+async def connect(conf: json.Data,
+                  data: json.Data = None
                   ) -> 'Client':
     """Connect to local monitor server
 
@@ -74,16 +88,16 @@ async def connect(conf: json.Data
     """
     client = Client()
     client._conf = conf
+    client._data = data
     client._components = []
     client._info = None
-    client._ready = None
+    client._ready = common.Ready(token=None,
+                                 enabled=False)
     client._change_cbs = util.CallbackRegistry()
-    client._async_group = aio.Group()
 
     client._conn = await chatter.connect(common.sbs_repo,
                                          conf['monitor_address'])
-    client._async_group.spawn(aio.call_on_cancel, client._conn.async_close)
-    client._async_group.spawn(client._receive_loop)
+    client.async_group.spawn(client._receive_loop)
 
     mlog.debug("connected to local monitor server %s", conf['monitor_address'])
     return client
@@ -94,7 +108,7 @@ class Client(aio.Resource):
     @property
     def async_group(self) -> aio.Group:
         """Async group"""
-        return self._async_group
+        return self._conn.async_group
 
     @property
     def info(self) -> typing.Optional[common.ComponentInfo]:
@@ -116,12 +130,12 @@ class Client(aio.Resource):
         """
         return self._change_cbs.register(cb)
 
-    def set_ready(self, token: typing.Optional[int]):
-        """Set ready token"""
-        if token == self._ready:
+    def set_ready(self, ready: common.Ready):
+        """Set ready"""
+        if ready == self._ready:
             return
 
-        self._ready = token
+        self._ready = ready
         self._send_msg_client()
 
     async def _receive_loop(self):
@@ -146,12 +160,12 @@ class Client(aio.Resource):
             mlog.warning("monitor client error: %s", e, exc_info=e)
 
         finally:
-            self._async_group.close()
+            self.close()
 
     def _send_msg_client(self):
         msg_client = common.MsgClient(name=self._conf['name'],
                                       group=self._conf['group'],
-                                      address=self._conf['component_address'],
+                                      data=self._data,
                                       ready=self._ready)
         self._conn.send(chatter.Data(
             module='HatMonitor',
@@ -178,34 +192,37 @@ class Component(aio.Resource):
     algorithms.
 
     Component runs client's loop which manages blessing/ready states based on
-    provided monitor client and component's enabled state.
+    provided monitor client. Initialy, component's ready is disabled.
 
-    When component is enabled and blessing token matches ready token,
-    `async_run_cb` is called with component instance and additional `args` and
-    `kwargs` arguments. While `async_run_cb` is running, if enabled state or
-    blessing token changes, `async_run_cb` is canceled.
+    Provided client is owned by component instance - closing component
+    will close associated client.
 
-    If `async_run_cb` finishes or raises exception, component is closed.
+    When component's ready is enabled and blessing token matches ready token,
+    `run_cb` is called with component instance and additionaly provided `args`
+    arguments. While `run_cb` is running, if ready enabled state or
+    blessing token changes, `run_cb` is canceled.
+
+    If `run_cb` finishes or raises exception, component is closed.
 
     """
 
     def __init__(self,
                  client: Client,
-                 async_run_cb: typing.Callable[..., typing.Awaitable],
+                 run_cb: RunCb,
                  *args, **kwargs):
         self._client = client
-        self._async_run_cb = async_run_cb
+        self._run_cb = run_cb
         self._args = args
         self._kwargs = kwargs
-        self._enabled = False
+        self._ready_enabled = False
         self._change_queue = aio.Queue()
-        self._async_group = client.async_group.create_subgroup()
-        self._async_group.spawn(self._component_loop)
+
+        self.async_group.spawn(self._component_loop)
 
     @property
     def async_group(self) -> aio.Group:
         """Async group"""
-        return self._async_group
+        return self._client.async_group
 
     @property
     def client(self) -> Client:
@@ -213,14 +230,16 @@ class Component(aio.Resource):
         return self._client
 
     @property
-    def enabled(self) -> bool:
-        return self._enabled
+    def ready_enabled(self) -> bool:
+        """Ready enabled"""
+        return self._ready_enabled
 
-    def set_enabled(self, enabled: bool):
-        if self._enabled == enabled:
+    def set_ready_enabled(self, ready_enabled: bool):
+        """Set ready enabled"""
+        if self._ready_enabled == ready_enabled:
             return
 
-        self._enabled = enabled
+        self._ready_enabled = ready_enabled
         self._change_queue.put_nowait(None)
 
     def _on_client_change(self):
@@ -233,12 +252,11 @@ class Component(aio.Resource):
                     mlog.debug("waiting blessing and ready")
                     await self._wait_until_blessed_and_ready()
 
-                    async with self._async_group.create_subgroup() as subgroup:
-                        mlog.debug("running component's async_run_cb")
+                    async with self.async_group.create_subgroup() as subgroup:
+                        mlog.debug("running component's run_cb")
 
                         run_future = subgroup.spawn(
-                            self._async_run_cb, self, *self._args,
-                            **self._kwargs)
+                            self._run_cb, self, *self._args, **self._kwargs)
                         ready_future = subgroup.spawn(
                             self._wait_while_blessed_and_ready)
 
@@ -259,33 +277,28 @@ class Component(aio.Resource):
 
     async def _wait_until_blessed_and_ready(self):
         while True:
-            if self._enabled:
-                info = self._client.info
-                blessing = info.blessing if info else None
-                ready = info.ready if info else None
+            enabled = self._ready_enabled
+            info = self._client.info
+            token = info.blessing.token if info and enabled else None
+            ready = common.Ready(token=token,
+                                 enabled=enabled)
 
-                self._client.set_ready(blessing)
-                if blessing and blessing == ready:
-                    break
-
-            else:
-                self._client.set_ready(0)
+            self._client.set_ready(ready)
+            if enabled and info and info.blessing.token == ready.token:
+                break
 
             await self._change_queue.get_until_empty()
 
     async def _wait_while_blessed_and_ready(self):
         while True:
-            if self._enabled:
-                info = self._client.info
-                blessing = info.blessing if info else None
-                ready = info.ready if info else None
+            enabled = self._ready_enabled
+            info = self._client.info
+            token = info.blessing.token if info and enabled else None
+            ready = common.Ready(token=token,
+                                 enabled=enabled)
 
-                if not blessing or blessing != ready:
-                    self._client.set_ready(None)
-                    break
-
-            else:
-                self._client.set_ready(0)
+            if not (enabled and info and info.blessing.token == ready.token):
+                self._client.set_ready(ready)
                 break
 
             await self._change_queue.get_until_empty()

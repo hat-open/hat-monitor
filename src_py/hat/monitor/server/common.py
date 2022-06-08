@@ -1,5 +1,6 @@
 """Common functionality"""
 
+import enum
 import typing
 
 from hat import sbs
@@ -8,6 +9,11 @@ from hat.monitor.common import (ComponentInfo,
                                 component_info_to_sbs,
                                 component_info_from_sbs)
 from hat.monitor.common import *  # NOQA
+
+
+class Algorithm(enum.Enum):
+    BLESS_ALL = 'BLESS_ALL'
+    BLESS_ONE = 'BLESS_ONE'
 
 
 class MsgSlave(typing.NamedTuple):

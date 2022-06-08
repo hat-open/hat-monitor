@@ -1,6 +1,7 @@
 """Implementation of local monitor server communication"""
 
 import contextlib
+import itertools
 import logging
 import typing
 
@@ -26,7 +27,7 @@ async def create(conf: json.Data
     """
     server = Server()
     server._default_rank = conf['default_rank']
-    server._last_cid = 0
+    server._next_cids = itertools.count(0)
     server._mid = 0
     server._rank_cache = {}
     server._local_components = []
@@ -110,8 +111,7 @@ class Server(aio.Resource):
         self._change_cbs.notify()
 
     def _create_client(self, conn):
-        self._last_cid += 1
-        cid = self._last_cid
+        cid = next(self._next_cids)
 
         client = _Client(self, conn, cid)
         self.async_group.spawn(client.client_loop)
@@ -120,18 +120,20 @@ class Server(aio.Resource):
                                     mid=self._mid,
                                     name=None,
                                     group=None,
-                                    address=None,
+                                    data=None,
                                     rank=self._default_rank,
-                                    blessing=None,
-                                    ready=None)
+                                    blessing=common.Blessing(token=None,
+                                                             timestamp=None),
+                                    ready=common.Ready(token=None,
+                                                       enabled=False))
         self._local_components = [*self._local_components, info]
         self._change_cbs.notify()
 
-    def _set_client(self, cid, name, group, address, ready):
+    def _set_client(self, cid, name, group, data, ready):
         info = util.first(self._local_components, lambda i: i.cid == cid)
         updated_info = info._replace(name=name,
                                      group=group,
-                                     address=address,
+                                     data=data,
                                      ready=ready)
 
         if info.name is None:
@@ -216,5 +218,5 @@ class _Client:
         self._server._set_client(cid=self._cid,
                                  name=msg_client.name,
                                  group=msg_client.group,
-                                 address=msg_client.address,
+                                 data=msg_client.data,
                                  ready=msg_client.ready)
