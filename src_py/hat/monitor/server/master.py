@@ -30,9 +30,9 @@ async def create(conf: json.Data
     master = Master()
     master._last_mid = 0
     master._group_algorithms = {
-        group: blessing.Algorithm[algorithm]
+        group: common.Algorithm[algorithm]
         for group, algorithm in conf['group_algorithms'].items()}
-    master._default_algorithm = blessing.Algorithm[conf['default_algorithm']]
+    master._default_algorithm = common.Algorithm[conf['default_algorithm']]
     master._components = []
     master._mid_components = {}
     master._change_cbs = util.CallbackRegistry()
@@ -149,12 +149,14 @@ class Master(aio.Resource):
         self._update_components()
 
     def _update_components(self):
-        blessings = {(i.mid, i.cid): i.blessing
-                     for i in self._components}
+        blessing_reqs = {(i.mid, i.cid): i.blessing_req
+                         for i in self._components}
         components = itertools.chain.from_iterable(
             self._mid_components.values())
-        components = [i._replace(blessing=blessings.get((i.mid, i.cid)))
-                      for i in components]
+        components = [
+            i._replace(blessing_req=blessing_reqs.get((i.mid, i.cid),
+                                                      i.blessing_req))
+            for i in components]
         components = blessing.calculate(components, self._group_algorithms,
                                         self._default_algorithm)
         if components == self._components:

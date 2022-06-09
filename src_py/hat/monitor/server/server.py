@@ -88,11 +88,19 @@ class Server(aio.Resource):
         if self._mid == mid and self._global_components == global_components:
             return
 
+        self._mid = mid
         self._global_components = global_components
-        if self._mid != mid:
-            self._mid = mid
-            self._local_components = [i._replace(mid=mid)
-                                      for i in self._local_components]
+
+        blessing_reqs = {info.cid: info.blessing_req
+                         for info in global_components
+                         if info.mid == mid}
+
+        self._local_components = [
+            info._replace(mid=mid,
+                          blessing_req=blessing_reqs.get(info.cid,
+                                                         info.blessing_req))
+            for info in self._local_components]
+
         self._change_cbs.notify()
 
     def set_rank(self,
@@ -116,25 +124,26 @@ class Server(aio.Resource):
         client = _Client(self, conn, cid)
         self.async_group.spawn(client.client_loop)
 
-        info = common.ComponentInfo(cid=cid,
-                                    mid=self._mid,
-                                    name=None,
-                                    group=None,
-                                    data=None,
-                                    rank=self._default_rank,
-                                    blessing=common.Blessing(token=None,
-                                                             timestamp=None),
-                                    ready=common.Ready(token=None,
-                                                       enabled=False))
+        info = common.ComponentInfo(
+            cid=cid,
+            mid=self._mid,
+            name=None,
+            group=None,
+            data=None,
+            rank=self._default_rank,
+            blessing_req=common.BlessingReq(token=None,
+                                            timestamp=None),
+            blessing_res=common.BlessingRes(token=None,
+                                            ready=False))
         self._local_components = [*self._local_components, info]
         self._change_cbs.notify()
 
-    def _set_client(self, cid, name, group, data, ready):
+    def _set_client(self, cid, name, group, data, blessing_res):
         info = util.first(self._local_components, lambda i: i.cid == cid)
         updated_info = info._replace(name=name,
                                      group=group,
                                      data=data,
-                                     ready=ready)
+                                     blessing_res=blessing_res)
 
         if info.name is None:
             rank_cache_key = name, group
@@ -219,4 +228,4 @@ class _Client:
                                  name=msg_client.name,
                                  group=msg_client.group,
                                  data=msg_client.data,
-                                 ready=msg_client.ready)
+                                 blessing_res=msg_client.blessing_res)
