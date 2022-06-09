@@ -166,10 +166,11 @@ Properties included in a component information:
         calculation algorithm is applied (see `Blessing algorithm`_). This
         property is assigned by client.
 
-    * `address`
+    * `data`
 
-        Component's address which other components use to connect to the
-        component. This property is optional and is assigned by client.
+        JSON serializable data representing arbitrary information that
+        correspond to the component.
+        This property is assigned by client.
 
     * `rank`
 
@@ -177,15 +178,38 @@ Properties included in a component information:
         initially assigned by local Monitor Server but can later be changed
         only by local Monitor Server.
 
-    * `blessing`
+    * `blessing_req`
 
-        Optional number used as unique token assigned and changed by master
-        Monitor Server (see `Component lifetime`_).
+        Blessing request assigned and changed exclusively by master
+        Monitor Server (see `Component lifetime`_). It consists of two optional
+        properties:
 
-    * `ready`
+        - `token` is optional number, used as unique token with the purpose
+          of assigning blessing to the component for its work.
+          When `token` is ``None``, it means component is not blessed.
+          Hereafter this `token` is called request `token`.
+        - `timestamp` is optional number that represents Unix epoch
+          timestamp.
+          It is strongly related to request `token` since corresponds to point
+          in time when master Monitor Server assigned request `token` to
+          the component. When `token` is ``None``, master also sets `timestamp`
+          to``None``.
 
-        Optional number used as unique token assigned and changed by client
-        (see `Component lifetime`_).
+    * `blessing_res`
+
+        Blessing response assigned and changed exclusively by client
+        (see `Component lifetime`_). It consists of two properties:
+
+        - `token` is optional number, used as unique token as a client's
+          response to master's blessing request `token`.
+          When response `token` is set to exactly the same value as the request
+          `token`, it means component is active, that is, it started providing
+          its functionality. When component is no more active, it revokes this
+          `token` by setting it to ``None``.
+          Hereafter this `token` is called response `token`.
+
+        - `ready` is boolean indicating whether component is ready to provide
+          its functionality.
 
 
 Master slave communication
@@ -201,23 +225,25 @@ Server addresses. These other servers are "superior" to the monitor server. A
 monitor server will always try to maintain an active connection with exactly
 one of its superiors. The addresses list is ordered by priority meaning that if
 the Monitor Server isn't connected to a superior, it tries to connect to the
-first monitor server in the list. If the connection fails, it tries the second
-one and so on. If it can't connect to any of its superiors, it can proclaim
-itself as master. The connecting to master process should continue even if the
-Monitor Server is master or it is not connected to its first superior. The
-connecting loop should be executed at least 2 or 3 times before the timeout can
-be used. The timeout should be kept small.
+first monitor server in the list with `connect_timeout`. If the connection
+fails, it tries the second one and so on. If it can't connect to any of its
+superiors, it waits for `connect_retry_delay` and retries again from the first
+monitor server in the list. It will retry `connect_retry_count` times before
+it can proclaim itself as master. The connecting to master process should
+continue even if the Monitor Server is master or it is not connected to its
+first superior. Connection parameters `connect_timeout`, `connect_retry_delay`
+and `connect_retry_count` are defined with configuration.
 
 Once a slave Monitor Server connects to the Master Monitor server it sends its
 local state to the master and keeps notifying the master about any change in
 its local state while the connection is active. The master gathers all local
 states and generates its global state which it then transmits to all its
-slaves and keeps notifying them of any change. Global state contains all
-component informations received from local states except for those where
+slaves and keeps notifying them of any change. Global state contains information
+from all components received from local states except for those where
 component's name or group are not set. Master also identifies each
 Monitor Server with unique monitor identifier (`mid`) which is provided to
 slave together with global state. It is important to note that only master
-Monitor Server calculates blessing token state for each component.
+Monitor Server calculates blessing request `blessing_req` for each component.
 
 Every Monitor Server is responsible for starting master listening socket
 immediately after startup. While Monitor Server isn't operating in master mode,
@@ -258,8 +284,8 @@ Server client communication
 
 Vertical communication between client and server enables bidirectional
 asynchronous exchange of component information data. Client is responsible
-for providing `name`, `group`, `address` and `ready` properties initially and
-on every change. Server provides global state to each connected client and
+for providing `name`, `group`, `data` and `blessing_res` properties initially
+and on every change. Server provides global state to each connected client and
 each client's component id (`cid`) and monitor id (`mid`). If any part of
 state available to server changes (including token changes), server sends
 updated state to all clients. Client can also request change for information
@@ -298,81 +324,111 @@ during entire component run lifetime. If this connection is closed for any
 reason, process also terminates. This behavior is not mandated.
 
 Components which connect to Monitor Server participate in redundancy
-supervised by master Monitor Server. Redundancy utilizes two tokens:
+supervised by master Monitor Server. Redundancy utilizes two tokens, the one
+from `blessing_req`, said as request `token`, and the other from
+`blessing_res`, said as response `token`:
 
-    * `blessing` token
+    * request `token`
 
-        This token is controlled exclusively by master Monitor Server. If
-        connection to master is not established, token's value is not set.
+        This token is controlled exclusively by master Monitor Server.
+        Master gives "blessing for work" to a component by setting this
+        token to an integer number. On the other hand, it revokes blessing
+        by setting this token to ``None``.
+        If connection to master is not established, token's value equals to
+        ``None``.
 
-    * `ready` token
+    * response `token`
 
-        This token is controlled exclusively by client. It will match
-        `blessing` value only if component is ready to provide its primary
-        functionality. At any time, if component stops providing primary
-        functionality, it should revoke this token. Value ``0`` should be
-        reserved for special usage defined by blessing algorithm.
+        This token is controlled exclusively by client. Upon receiving request
+        `token` component starts providing its functionality and sets
+        response `token` to match the request `token` in order to signalize
+        its activity. If, at any time, component stops its activity, it revokes
+        token by setting it to ``None``.
 
-Each component determines if it should provide primary functionality based on
-global state provided by local Monitor Server. If client's component
-information contains `blessing` and `ready` token with same value, component
-can provide primary functionality. If, at any time, these values do not match,
-component should stop its usual activity which is indicated by client's
-revoking of `ready` token.
+While component information has request and response tokens with the same
+same value, it means component is active. If, at any time,
+component losses blessing, that is, master revokes request `token`, component
+starts with stopping its activity. When component activity is stopped it
+indicates it by revoking the response `token`.
+
+On behalf of `ready` property of `blessing_res`, each component informs
+whether it is ready to provide its functionality based on global state provided
+by local Monitor Server. While component is not ready, one does not expect that
+it gets the request token. In any case, component that is not `ready` never
+sets its response `token`.
 
 
 Blessing algorithm
 ------------------
 
-Blessing algorithm determines value of each component's `blessing` token. This
-calculation is performed on master Monitor Server and should be executed
+Blessing algorithm determines value of each component's request `token`.
+This calculation is performed on master Monitor Server and should be executed
 each time any part of global state changes. This calculation should be
 integrated part of state change and thus provide global state consistency.
+That is, one can say that master Monitor Server blessed a component when it
+set its request `token` to an integer value.
 
-Monitor Server implements multiple algorithms for calculating value of blessing
-token. Each component `group` can have different associated blessing algorithm
+Monitor Server implements multiple algorithms for calculating value of request
+token. Each component `group` can have associated different blessing algorithm
 and all groups that don't have associated blessing algorithm use default
 algorithm. Group's associated algorithms and default algorithm are provided
 to Monitor Server as configuration parameters during its startup.
 
-Calculation of `blessing` token values is based only on previous global state
+Calculation of request `token` values is based only on previous global state
 and new changes that triggered execution of blessing algorithm.
 
 Currently supported algorithms:
 
     * BLESS_ALL
 
-        This simple algorithm provides continuous blessing to all components
-        in associated group. Blessing is never revoked.
+        This simple algorithm provides blessing to all components in associated
+        group that are ready (`ready` flag of `blessing_res` is ``True``).
+        Blessing is revoked only when ready component is turned to not ready.
 
     * BLESS_ONE
 
         In each group with this algorithm associated, there can be only one
-        highlander and component with issued blessing token. For determining
-        which component can receive blessing token, component's rank is used.
-        Components with mathematically lower rank value have higher priority
-        in obtaining blessing token. If there exist more than one component with
-        highest priority than one with already set blessing token is chosen.
-        If neither of component have already set blessing token, than one of
-        components with lowest `mid` value is chosen. Once component which can
-        obtain blessing token is chosen, if chosen component doesn't already
-        have blessing token, master revokes previously issued blessing token
-        from other component in the same group and waits for all components in
-        the same group to revoke theirs ready tokens. Only once all other
-        components revoke their ready tokens, master issues new blessing token
-        to chosen component.
+        highlander and only one blessed component.
+        Only components that are ready (`ready` flag of `blessing_res`
+        is ``True``) are considered as candidates for receiving blessing.
+        In case there is no any ready component, this  algorithm will not give
+        blessing to any component.
 
-        Ready token 0 is used by component to signalize state in which it
-        is not ready to provide full functionality. Server will never set
-        blessing to 0 and will not provide blessing token to any component with
-        ready set to 0.
+        For determining which component receives the blessing, multiple ordered
+        criteria are applied sequentially until there is only one component
+        left. If any of the criteria is satisfied by more than one component,
+        the next criteria is applied.
+        Criteria are the following, respectively:
+
+        1) the lowest `rank`
+        2) request `token` set
+        3) the lowest blessing `timestamp`
+        4) the lowest `mid`
+
+        Component with mathematically lowest `rank` value is blessed.
+        If there exist more than one component with the lowest rank, then
+        the one that has already set request token is chosen.
+        If there exist more than one component that has already set request
+        token, then the one that has the lowest blessing `timestamp` is chosen.
+        If neither one of the components have already set request token or if
+        there exist more than one component with the lowest blessing
+        `timestamp`, then the one with the lowest `mid` value is chosen.
+        The last criteria ensures only one component is left for selection,
+        since there cannot exit more than one component with the same `mid`.
+
+        Finally, when algorithm defined the component to be blessed, if it
+        doesn't already have request token, `master` revokes previously issued
+        request token from other component in the same group and waits until all
+        components in the same group have revoked theirs response tokens.
+        Only once all other components revoke their response tokens, master
+        issues new request token to chosen component.
 
 
 Components rank
 ---------------
 
-Association of component's rank is responsibility of component's local Monitor
-Server for all of it's local components. Monitor Server should associate same
+Association of component's `rank` is responsibility of component's local Monitor
+Server for all of its local components. Monitor Server should associate same
 rank as was last rank value associated with previously active client connection
 with same `name` and `group` values as newly established connection. If such
 previously active connection does not exist, default rank value, as specified
@@ -425,7 +481,7 @@ juggler local data defined by JSON schema:
                     - cid
                     - name
                     - group
-                    - address
+                    - data
                     - rank
                 properties:
                     cid:
@@ -435,10 +491,6 @@ juggler local data defined by JSON schema:
                             - string
                             - "null"
                     group:
-                        type:
-                            - string
-                            - "null"
-                    address:
                         type:
                             - string
                             - "null"
@@ -453,10 +505,10 @@ juggler local data defined by JSON schema:
                     - mid
                     - name
                     - group
-                    - address
+                    - data
                     - rank
-                    - blessing
-                    - ready
+                    - blessing_req
+                    - blessing_res
                 properties:
                     cid:
                         type: integer
@@ -470,20 +522,34 @@ juggler local data defined by JSON schema:
                         type:
                             - string
                             - "null"
-                    address:
-                        type:
-                            - string
-                            - "null"
                     rank:
                         type: integer
-                    blessing:
-                        type:
-                            - integer
-                            - "null"
-                    ready:
-                        type:
-                            - integer
-                            - "null"
+                    blessing_req:
+                        type: object
+                        required:
+                            - token
+                            - timestamp
+                        properties:
+                            token:
+                                type:
+                                    - integer
+                                    - "null"
+                            timestamp:
+                                type:
+                                    - float
+                                    - "null"
+                    blessing_res:
+                        type: object
+                        required:
+                            - token
+                            - ready
+                        properties:
+                            token:
+                                type:
+                                    - integer
+                                    - "null"
+                            ready:
+                                type: boolean
 
 Server doesn't send additional `MESSAGE` juggler messages.
 
@@ -530,7 +596,6 @@ Future features
 
 .. todo::
 
-    * configurable master retry count and timeouts
     * optional connection to monitor/event server
 
         * mapping of current status to events
