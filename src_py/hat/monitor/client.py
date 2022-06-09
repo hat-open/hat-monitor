@@ -25,10 +25,10 @@ Example of low-level interface usage::
 `Component` provide high-level interface for communication with
 Monitor Server. Component, listens to client changes and, in regard to blessing
 and ready, calls or cancels `run_cb` callback. In case component is
-ready enabled and blessing token matches ready token, `run_cb` is called.
-While `run_cb` is running, once ready enable or blessing token changes,
-`run_cb` is canceled. If `run_cb` finishes or raises exception or
-connection to monitor server is closed, component is closed.
+ready and blessing token matches, `run_cb` is called. While `run_cb` is
+running, once ready or blessing token changes, `run_cb` is canceled. If
+`run_cb` finishes or raises exception or connection to monitor server is
+closed, component is closed.
 
 Example of high-level interface usage::
 
@@ -44,7 +44,7 @@ Example of high-level interface usage::
             'monitor_address': 'tcp+sbs://127.0.0.1:23010'}
     client = await hat.monitor.client.connect(conf)
     component = Component(client, run_component)
-    component.set_ready_enabled(True)
+    component.set_ready(True)
     try:
         await component.wait_closed()
     finally:
@@ -91,8 +91,8 @@ async def connect(conf: json.Data,
     client._data = data
     client._components = []
     client._info = None
-    client._ready = common.Ready(token=None,
-                                 enabled=False)
+    client._blessing_res = common.BlessingRes(token=None,
+                                              ready=False)
     client._change_cbs = util.CallbackRegistry()
 
     client._conn = await chatter.connect(common.sbs_repo,
@@ -130,12 +130,12 @@ class Client(aio.Resource):
         """
         return self._change_cbs.register(cb)
 
-    def set_ready(self, ready: common.Ready):
-        """Set ready"""
-        if ready == self._ready:
+    def set_blessing_res(self, res: common.BlessingRes):
+        """Set blessing response"""
+        if res == self._blessing_res:
             return
 
-        self._ready = ready
+        self._blessing_res = res
         self._send_msg_client()
 
     async def _receive_loop(self):
@@ -166,7 +166,7 @@ class Client(aio.Resource):
         msg_client = common.MsgClient(name=self._conf['name'],
                                       group=self._conf['group'],
                                       data=self._data,
-                                      ready=self._ready)
+                                      blessing_res=self._blessing_res)
         self._conn.send(chatter.Data(
             module='HatMonitor',
             type='MsgClient',
@@ -214,7 +214,7 @@ class Component(aio.Resource):
         self._run_cb = run_cb
         self._args = args
         self._kwargs = kwargs
-        self._ready_enabled = False
+        self._ready = False
         self._change_queue = aio.Queue()
 
         self.async_group.spawn(self._component_loop)
@@ -230,16 +230,16 @@ class Component(aio.Resource):
         return self._client
 
     @property
-    def ready_enabled(self) -> bool:
-        """Ready enabled"""
-        return self._ready_enabled
+    def ready(self) -> bool:
+        """Ready"""
+        return self._ready
 
-    def set_ready_enabled(self, ready_enabled: bool):
-        """Set ready enabled"""
-        if self._ready_enabled == ready_enabled:
+    def set_ready(self, ready: bool):
+        """Set ready"""
+        if self._ready == ready:
             return
 
-        self._ready_enabled = ready_enabled
+        self._ready = ready
         self._change_queue.put_nowait(None)
 
     def _on_client_change(self):
@@ -277,28 +277,26 @@ class Component(aio.Resource):
 
     async def _wait_until_blessed_and_ready(self):
         while True:
-            enabled = self._ready_enabled
             info = self._client.info
-            token = info.blessing.token if info and enabled else None
-            ready = common.Ready(token=token,
-                                 enabled=enabled)
+            token = info.blessing_req.token if info and self._ready else None
+            blessing_res = common.Ready(token=token,
+                                        ready=self._ready)
 
-            self._client.set_ready(ready)
-            if enabled and info and info.blessing.token == ready.token:
+            self._client.set_blessing_res(blessing_res)
+            if self._ready and info and info.blessing_req.token == token:
                 break
 
             await self._change_queue.get_until_empty()
 
     async def _wait_while_blessed_and_ready(self):
         while True:
-            enabled = self._ready_enabled
             info = self._client.info
-            token = info.blessing.token if info and enabled else None
-            ready = common.Ready(token=token,
-                                 enabled=enabled)
+            token = info.blessing_req.token if info and self._ready else None
+            blessing_res = common.Ready(token=token,
+                                        ready=self._ready)
 
-            if not (enabled and info and info.blessing.token == ready.token):
-                self._client.set_ready(ready)
+            if not (self._ready and info and info.blessing_req.token == token):
+                self._client.set_blessing_res(blessing_res)
                 break
 
             await self._change_queue.get_until_empty()

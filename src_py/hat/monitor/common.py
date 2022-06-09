@@ -19,14 +19,14 @@ sbs_repo: sbs.Repository = sbs.Repository(
     sbs.Repository.from_json(package_path / 'sbs_repo.json'))
 
 
-class Blessing(typing.NamedTuple):
+class BlessingReq(typing.NamedTuple):
     token: typing.Optional[int]
     timestamp: typing.Optional[float]
 
 
-class Ready(typing.NamedTuple):
+class BlessingRes(typing.NamedTuple):
     token: typing.Optional[int]
-    enabled: bool
+    ready: bool
 
 
 class ComponentInfo(typing.NamedTuple):
@@ -36,15 +36,15 @@ class ComponentInfo(typing.NamedTuple):
     group: typing.Optional[str]
     data: json.Data
     rank: int
-    blessing: Blessing
-    ready: Ready
+    blessing_req: BlessingReq
+    blessing_res: BlessingRes
 
 
 class MsgClient(typing.NamedTuple):
     name: str
     group: str
     data: json.Data
-    ready: Ready
+    blessing_res: BlessingRes
 
 
 class MsgServer(typing.NamedTuple):
@@ -53,28 +53,28 @@ class MsgServer(typing.NamedTuple):
     components: typing.List[ComponentInfo]
 
 
-def blessing_to_sbs(blessing: Blessing) -> sbs.Data:
-    """Convert blessing to SBS data"""
+def blessing_req_to_sbs(blessing: BlessingReq) -> sbs.Data:
+    """Convert blessing request to SBS data"""
     return {'token': _value_to_sbs_maybe(blessing.token),
             'timestamp': _value_to_sbs_maybe(blessing.timestamp)}
 
 
-def blessing_from_sbs(data: sbs.Data) -> Blessing:
-    """Convert SBS data to blessing"""
-    return Blessing(token=_value_from_sbs_maybe(data['token']),
-                    timestamp=_value_from_sbs_maybe(data['timestamp']))
+def blessing_req_from_sbs(data: sbs.Data) -> BlessingReq:
+    """Convert SBS data to blessing request"""
+    return BlessingReq(token=_value_from_sbs_maybe(data['token']),
+                       timestamp=_value_from_sbs_maybe(data['timestamp']))
 
 
-def ready_to_sbs(ready: Ready) -> sbs.Data:
-    """Convert ready to SBS data"""
-    return {'token': _value_to_sbs_maybe(ready.token),
-            'enabled': ready.enabled}
+def blessing_res_to_sbs(res: BlessingRes) -> sbs.Data:
+    """Convert blessing response to SBS data"""
+    return {'token': _value_to_sbs_maybe(res.token),
+            'ready': res.ready}
 
 
-def ready_from_sbs(data: sbs.Data) -> Blessing:
-    """Convert SBS data to ready"""
-    return Blessing(token=_value_from_sbs_maybe(data['token']),
-                    enabled=data['enabled'])
+def blessing_res_from_sbs(data: sbs.Data) -> BlessingRes:
+    """Convert SBS data to blessing response"""
+    return BlessingRes(token=_value_from_sbs_maybe(data['token']),
+                       ready=data['ready'])
 
 
 def component_info_to_sbs(info: ComponentInfo) -> sbs.Data:
@@ -85,20 +85,21 @@ def component_info_to_sbs(info: ComponentInfo) -> sbs.Data:
             'group': _value_to_sbs_maybe(info.group),
             'data': json.encode(info.data),
             'rank': info.rank,
-            'blessing': blessing_to_sbs(info.blessing),
-            'ready': ready_to_sbs(info.ready)}
+            'blessingReq': blessing_req_to_sbs(info.blessing_req),
+            'blessingRes': blessing_res_to_sbs(info.blessing_req)}
 
 
 def component_info_from_sbs(data: sbs.Data) -> ComponentInfo:
     """Convert SBS data to component info"""
-    return ComponentInfo(cid=data['cid'],
-                         mid=data['mid'],
-                         name=_value_from_sbs_maybe(data['name']),
-                         group=_value_from_sbs_maybe(data['group']),
-                         data=json.decode(data['data']),
-                         rank=data['rank'],
-                         blessing=blessing_from_sbs(data['blessing']),
-                         ready=ready_from_sbs(data['ready']))
+    return ComponentInfo(
+        cid=data['cid'],
+        mid=data['mid'],
+        name=_value_from_sbs_maybe(data['name']),
+        group=_value_from_sbs_maybe(data['group']),
+        data=json.decode(data['data']),
+        rank=data['rank'],
+        blessing_req=blessing_req_from_sbs(data['blessingReq']),
+        blessing_res=blessing_res_from_sbs(data['blessingRes']))
 
 
 def msg_client_to_sbs(msg: MsgClient) -> sbs.Data:
@@ -106,7 +107,7 @@ def msg_client_to_sbs(msg: MsgClient) -> sbs.Data:
     return {'name': msg.name,
             'group': msg.group,
             'data': json.encode(msg.data),
-            'ready': ready_to_sbs(msg.ready)}
+            'blessingRes': blessing_res_to_sbs(msg.blessing_res)}
 
 
 def msg_client_from_sbs(data: sbs.Data) -> MsgClient:
@@ -114,7 +115,7 @@ def msg_client_from_sbs(data: sbs.Data) -> MsgClient:
     return MsgClient(name=data['name'],
                      group=data['group'],
                      data=json.decode(data['data']),
-                     ready=ready_from_sbs(data['ready']))
+                     blessing_res=blessing_res_from_sbs(data['blessingRes']))
 
 
 def msg_server_to_sbs(msg: MsgServer) -> sbs.Data:

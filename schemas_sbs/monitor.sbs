@@ -1,10 +1,10 @@
 module HatMonitor
 
 MsgClient = Tuple {
-    name:   String
-    group:  String
-    data:   String
-    ready:  Ready
+    name:         String
+    group:        String
+    data:         String
+    blessingRes:  BlessingRes
 }
 
 MsgServer = Tuple {
@@ -23,22 +23,22 @@ MsgMaster = Tuple {
 }
 
 ComponentInfo = Tuple {
-    cid:       Integer
-    mid:       Integer
-    name:      Maybe(String)
-    group:     Maybe(String)
-    data:      String
-    rank:      Integer
-    blessing:  Blessing
-    ready:     Ready
+    cid:          Integer
+    mid:          Integer
+    name:         Maybe(String)
+    group:        Maybe(String)
+    data:         String
+    rank:         Integer
+    blessingReq:  BlessingReq
+    blessingRes:  BlessingRes
 }
 
-Blessing = Tuple {
+BlessingReq = Tuple {
     token:      Maybe(Integer)
     timestamp:  Maybe(Float)
 }
 
-Ready = Tuple {
-    token:    Maybe(Integer)
-    enabled:  Boolean
+BlessingRes = Tuple {
+    token:  Maybe(Integer)
+    ready:  Boolean
 }
