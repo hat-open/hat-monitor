@@ -49,16 +49,16 @@ function localComponentsVt() {
                     ['th.col-id', 'CID'],
                     ['th.col-name', 'Name'],
                     ['th.col-group', 'Group'],
-                    ['th.col-address', 'Address'],
+                    ['th.col-data', 'Data'],
                     ['th.col-rank', 'Rank']
                 ]
             ],
-            ['tbody', components.map(({cid, name, group, address, rank}) =>
+            ['tbody', components.map(({cid, name, group, data, rank}) =>
                 ['tr',
                     ['td.col-id', String(cid)],
                     ['td.col-name', name || ''],
                     ['td.col-group', group || ''],
-                    ['td.col-address', address || ''],
+                    ['td.col-data', data || ''],
                     ['td.col-rank',
                         ['div',
                             ['button', {
@@ -90,26 +90,50 @@ function globalComponentsVt() {
         ['table',
             ['thead',
                 ['tr',
+                    ['th'],
+                    ['th'],
+                    ['th'],
+                    ['th'],
+                    ['th'],
+                    ['th'],
+                    ['th', { props: { colspan: '2' } }, 'Blessing req'],
+                    ['th', { props: { colspan: '2' } }, 'Blessing res'],
+                ],
+                ['tr',
                     ['th.col-id', 'CID'],
                     ['th.col-id', 'MID'],
                     ['th.col-name', 'Name'],
                     ['th.col-group', 'Group'],
-                    ['th.col-address', 'Address'],
+                    ['th.col-data', 'Data'],
                     ['th.col-rank', 'Rank'],
-                    ['th.col-blessing', 'Blessing'],
-                    ['th.col-ready', 'Ready']
+                    ['th.col-blessing-req-token', 'Token'],
+                    ['th.col-blessing-req-timestamp', 'Timestamp'],
+                    ['th.col-blessing-res-token', 'Token'],
+                    ['th.col-blessing-res-ready', 'Ready']
                 ]
             ],
-            ['tbody', components.map(({cid, mid, name, group, address, rank, blessing, ready}) =>
+            ['tbody', components.map(({cid, mid, name, group, data, rank,
+                                       blessing_req_token,
+                                       blessing_req_timestamp,
+                                       blessing_res_token,
+                                       blessing_res_ready}) =>
                 ['tr',
                     ['td.col-id', String(cid)],
                     ['td.col-id', String(mid)],
                     ['td.col-name', name || ''],
                     ['td.col-group', group || ''],
-                    ['td.col-address', address || ''],
+                    ['td.col-data', data || ''],
                     ['td.col-rank', String(rank)],
-                    ['td.col-blessing', (blessing !== null ? String(blessing) : '')],
-                    ['td.col-ready', (ready !== null ? String(ready) : '')]
+                    ['td.col-blessing-req-token', (blessing_req_token !== null
+                                                   ? String(blessing_req_token)
+                                                   : '')],
+                    ['td.col-blessing-req-timestamp', (blessing_req_timestamp !== null
+                                                       ? String(blessing_req_timestamp)
+                                                       : '')],
+                    ['td.col-blessing-res-token', (blessing_res_token !== null
+                                                   ? String(blessing_res_token)
+                                                   : '')],
+                    ['td.col-blessing-res-ready', String(blessing_res_ready)]
                 ]
             )]
         ]
