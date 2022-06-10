@@ -96,8 +96,8 @@ function globalComponentsVt() {
                     ['th'],
                     ['th'],
                     ['th'],
-                    ['th', { props: { colspan: '2' } }, 'Blessing req'],
-                    ['th', { props: { colspan: '2' } }, 'Blessing res'],
+                    ['th', { attrs: { colspan: '2' } }, 'Blessing req'],
+                    ['th', { attrs: { colspan: '2' } }, 'Blessing res'],
                 ],
                 ['tr',
                     ['th.col-id', 'CID'],
@@ -128,7 +128,7 @@ function globalComponentsVt() {
                                                    ? String(blessing_req_token)
                                                    : '')],
                     ['td.col-blessing-req-timestamp', (blessing_req_timestamp !== null
-                                                       ? String(blessing_req_timestamp)
+                                                       ? formatTs(blessing_req_timestamp)
                                                        : '')],
                     ['td.col-blessing-res-token', (blessing_res_token !== null
                                                    ? String(blessing_res_token)
@@ -139,6 +139,18 @@ function globalComponentsVt() {
         ]
     ];
 }
+
+
+function formatTs(timestamp) {
+    const d = new Date(timestamp * 1000);
+    const z = n => String(n).padStart(2, '0');
+    const zz = n => String(n).padStart(3, '0');
+
+    return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ` +
+        `${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}` +
+        `.${zz(d.getMilliseconds())}`;
+}
+
 
 
 window.addEventListener('load', main);
