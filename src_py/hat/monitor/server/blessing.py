@@ -33,9 +33,9 @@ def calculate(components: typing.List[common.ComponentInfo],
     for group, components_from_group in group_components.items():
         algorithm = group_algorithms.get(group, default_algorithm)
         for c in _calculate_group(algorithm, components_from_group):
-            blessings[c.mid, c.cid] = c.blessing
+            blessings[c.mid, c.cid] = c.blessing_req
 
-    return [c._replace(blessing=blessings[c.mid, c.cid])
+    return [c._replace(blessing_req=blessings[c.mid, c.cid])
             for c in components]
 
 
@@ -51,40 +51,64 @@ def _calculate_group(algorithm, components):
 
 def _bless_all(components):
     for c in components:
-        if c.blessing.token is not None:
+        if not c.blessing_res.ready:
+            yield c._replace(blessing_req=common.BlessingReq(token=None,
+                                                             timestamp=None))
+
+        elif c.blessing_req.token is not None:
             yield c
 
         else:
-            blessing = common.Blessing(token=next(_next_tokens),
-                                       timestamp=time.now())
-            yield c._replace(blessing=blessing)
+            blessing = common.BlessingReq(token=next(_next_tokens),
+                                          timestamp=time.time())
+            yield c._replace(blessing_req=blessing)
 
 
 def _bless_one(components):
+
+    def highlander_survived(highlander, c):
+        if not highlander:
+            return
+        if c.rank < highlander.rank:
+            return
+        if c.rank == highlander.rank:
+            if c.blessing_req.token and not highlander.blessing_req.token:
+                return
+            if c.blessing_req.token and highlander.blessing_req.token:
+                if (c.blessing_req.timestamp <
+                        highlander.blessing_req.timestamp):
+                    return
+            if (c.blessing_req.token and highlander.blessing_req.token) or (
+                    not c.blessing_req.token and
+                    not highlander.blessing_req.token):
+                if c.mid < highlander.mid:
+                    return
+        return True
+
     highlander = None
-    ready_exist = False
+    active_exits = False
     for c in components:
-        if c.ready:
-            ready_exist = True
-        if c.ready == 0:
+        if c.blessing_res.token:
+            active_exits = True
+        if not c.blessing_res.ready:
             continue
-        if highlander and highlander.rank < c.rank:
-            continue
-        if highlander and highlander.rank == c.rank and (highlander.blessing or
-                                                         not c.blessing):
+        if highlander_survived(highlander, c):
             continue
         highlander = c
 
-    if highlander and not highlander.blessing and ready_exist:
+    if highlander and not highlander.blessing_req.token and active_exits:
         highlander = None
 
     for c in components:
         if c != highlander:
             blessing = common.Blessing(token=None,
                                        timestamp=None)
-            c = c._replace(blessing=blessing)
-        elif c.blessing.token is None:
+            yield c._replace(blessing_req=blessing)
+
+        elif c.blessing_req.token is None:
             blessing = common.Blessing(token=next(_next_tokens),
-                                       timestamp=time.now())
-            c = c._replace(blessing=blessing)
-        yield c
+                                       timestamp=time.time())
+            yield c._replace(blessing_req=blessing)
+
+        else:
+            yield c
