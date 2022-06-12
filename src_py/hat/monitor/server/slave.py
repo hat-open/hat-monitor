@@ -17,15 +17,6 @@ import hat.monitor.server.server
 mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
 
-connect_timeout: float = 5
-"""Connect timeout in seconds"""
-
-connect_retry_count: int = 3
-"""Connect retry count before local master is activated"""
-
-connect_retry_delay: float = 1
-"""Connect retry delay in seconds"""
-
 
 async def run(conf: json.Data,
               server: hat.monitor.server.server.Server,
@@ -58,7 +49,11 @@ async def run(conf: json.Data,
             server.update(0, [])
 
             if not conn or not conn.is_open:
-                conn = await connect(conf['parents'], connect_retry_count)
+                conn = await connect(
+                    addresses=conf['parents'],
+                    connect_timeout=conf['connect_timeout'],
+                    connect_retry_count=conf['connect_retry_count'],
+                    connect_retry_delay=conf['connect_retry_delay'])
 
             if conn and conn.is_open:
                 mlog.debug('master detected - activating local slave')
@@ -71,7 +66,11 @@ async def run(conf: json.Data,
             else:
                 mlog.debug('no master detected - activating local master')
                 await master.set_server(server)
-                conn = await connect(conf['parents'], None)
+                conn = await connect(
+                    addresses=conf['parents'],
+                    connect_timeout=conf['connect_timeout'],
+                    connect_retry_count=None,
+                    connect_retry_delay=conf['connect_retry_delay'])
                 await master.set_server(None)
 
     except Exception as e:
@@ -83,10 +82,13 @@ async def run(conf: json.Data,
 
 
 async def connect(addresses: str,
-                  retry_count: typing.Optional[int]
+                  connect_timeout: float,
+                  connect_retry_count: typing.Optional[int],
+                  connect_retry_delay: float
                   ) -> typing.Optional[chatter.Connection]:
     """Establish connection with remote master"""
-    counter = range(retry_count) if retry_count else itertools.repeat(None)
+    counter = (range(connect_retry_count) if connect_retry_count
+               else itertools.repeat(None))
     for _ in counter:
         for address in addresses:
             with contextlib.suppress(Exception):

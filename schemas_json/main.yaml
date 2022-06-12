@@ -68,12 +68,21 @@ definitions:
         type: object
         required:
             - parents
+            - connect_timeout
+            - connect_retry_count
+            - connect_retry_delay
         properties:
             parents:
                 title: parent addresses
                 type: array
                 items:
                     type: string
+            connect_timeout:
+                type: number
+            connect_retry_count:
+                type: integer
+            connect_retry_delay:
+                type: number
     ui:
         title: UI Web Server
         type: object
