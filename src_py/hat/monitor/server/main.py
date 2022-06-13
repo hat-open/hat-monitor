@@ -1,14 +1,13 @@
 """Monitor server main"""
 
 from pathlib import Path
+import argparse
 import asyncio
 import contextlib
 import logging.config
 import sys
-import typing
 
 import appdirs
-import click
 
 from hat import aio
 from hat import json
@@ -29,22 +28,32 @@ user_conf_dir: Path = Path(appdirs.user_config_dir('hat'))
 """User configuration directory path"""
 
 
-@click.command()
-@click.option('--conf', default=None, metavar='PATH', type=Path,
-              help="configuration defined by hat-monitor://main.yaml# "
-                   "(default $XDG_CONFIG_HOME/hat/monitor.{yaml|yml|json})")
-def main(conf: typing.Optional[Path]):
+def create_argument_parser() -> argparse.ArgumentParser:
+    """Create argument parser"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--conf', metavar='PATH', type=Path, default=None,
+        help="configuration defined by hat-monitor://main.yaml# "
+             "(default $XDG_CONFIG_HOME/hat/monitor.{yaml|yml|json})")
+    return parser
+
+
+def main():
     """Monitor Server"""
-    if not conf:
+    parser = create_argument_parser()
+    args = parser.parse_args()
+
+    conf_path = args.conf
+    if not conf_path:
         for suffix in ('.yaml', '.yml', '.json'):
-            conf = (user_conf_dir / 'monitor').with_suffix(suffix)
-            if conf.exists():
+            conf_path = (user_conf_dir / 'monitor').with_suffix(suffix)
+            if conf_path.exists():
                 break
 
-    if conf == Path('-'):
+    if conf_path == Path('-'):
         conf = json.decode_stream(sys.stdin)
     else:
-        conf = json.decode_file(conf)
+        conf = json.decode_file(conf_path)
 
     sync_main(conf)
 
