@@ -1,11 +1,40 @@
-
 import pytest
 
-from hat import util
-from hat import juggler
 from hat import aio
+from hat import juggler
+from hat import util
 from hat.monitor.server import common
 import hat.monitor.server.ui
+
+
+infos = [
+    common.ComponentInfo(
+        cid=1,
+        mid=2,
+        name='name',
+        group='group',
+        data=None,
+        rank=3,
+        blessing_req=common.BlessingReq(
+            token=None,
+            timestamp=None),
+        blessing_res=common.BlessingRes(
+            token=123,
+            ready=False)),
+    common.ComponentInfo(
+        cid=1,
+        mid=2,
+        name='name',
+        group='group',
+        data={'address': 'abc'},
+        rank=3,
+        blessing_req=common.BlessingReq(
+            token=42,
+            timestamp=123),
+        blessing_res=common.BlessingRes(
+            token=None,
+            ready=True))
+]
 
 
 @pytest.fixture
@@ -16,6 +45,11 @@ def ui_port():
 @pytest.fixture
 def ui_address(ui_port):
     return f'http://127.0.0.1:{ui_port}'
+
+
+@pytest.fixture
+def conf(ui_address):
+    return {'address': ui_address}
 
 
 @pytest.fixture
@@ -83,9 +117,7 @@ class Server(aio.Resource):
         self._change_cbs.notify()
 
 
-async def test_connect(patch_autoflush_delay, ui_address, ui_juggler_address):
-    conf = {'address': ui_address}
-
+async def test_connect(patch_autoflush_delay, conf, ui_juggler_address):
     server = Server()
     ui = await hat.monitor.server.ui.create(conf, server)
 
@@ -104,19 +136,8 @@ async def test_connect(patch_autoflush_delay, ui_address, ui_juggler_address):
 
 
 @pytest.mark.parametrize("conn_count", [1, 2, 5])
-async def test_local_components(patch_autoflush_delay, ui_address,
+async def test_local_components(patch_autoflush_delay, conf,
                                 ui_juggler_address, conn_count):
-    conf = {'address': ui_address}
-
-    info = common.ComponentInfo(cid=1,
-                                mid=2,
-                                name='name',
-                                group='group',
-                                address='address',
-                                rank=3,
-                                blessing=4,
-                                ready=5)
-
     server = Server()
     ui = await hat.monitor.server.ui.create(conf, server)
 
@@ -128,15 +149,16 @@ async def test_local_components(patch_autoflush_delay, ui_address,
         state = await conn.change_queue.get()
         assert state['local_components'] == []
 
-    server.set_local_components([info])
+    server.set_local_components(infos)
 
     for conn in conns:
         state = await conn.change_queue.get()
         assert state['local_components'] == [{'cid': info.cid,
                                               'name': info.name,
                                               'group': info.group,
-                                              'address': info.address,
-                                              'rank': info.rank}]
+                                              'data': info.data,
+                                              'rank': info.rank}
+                                             for info in infos]
 
     server.set_local_components([])
 
@@ -152,19 +174,8 @@ async def test_local_components(patch_autoflush_delay, ui_address,
 
 
 @pytest.mark.parametrize("conn_count", [1, 2, 5])
-async def test_global_components(patch_autoflush_delay, ui_address,
+async def test_global_components(patch_autoflush_delay, conf,
                                  ui_juggler_address, conn_count):
-    conf = {'address': ui_address}
-
-    info = common.ComponentInfo(cid=1,
-                                mid=2,
-                                name='name',
-                                group='group',
-                                address='address',
-                                rank=3,
-                                blessing=4,
-                                ready=5)
-
     server = Server()
     ui = await hat.monitor.server.ui.create(conf, server)
 
@@ -176,18 +187,22 @@ async def test_global_components(patch_autoflush_delay, ui_address,
         state = await conn.change_queue.get()
         assert state['global_components'] == []
 
-    server.set_global_components([info])
+    server.set_global_components(infos)
 
     for conn in conns:
         state = await conn.change_queue.get()
-        assert state['global_components'] == [{'cid': info.cid,
-                                               'mid': info.mid,
-                                               'name': info.name,
-                                               'group': info.group,
-                                               'address': info.address,
-                                               'rank': info.rank,
-                                               'blessing': info.blessing,
-                                               'ready': info.ready}]
+        assert state['global_components'] == [
+            {'cid': info.cid,
+             'mid': info.mid,
+             'name': info.name,
+             'group': info.group,
+             'data': info.data,
+             'rank': info.rank,
+             'blessing_req': {'token': info.blessing_req.token,
+                              'timestamp': info.blessing_req.timestamp},
+             'blessing_res': {'token': info.blessing_res.token,
+                              'ready': info.blessing_res.ready}}
+            for info in infos]
 
     server.set_global_components([])
 
@@ -202,10 +217,7 @@ async def test_global_components(patch_autoflush_delay, ui_address,
     await ui.async_close()
 
 
-async def test_set_rank(patch_autoflush_delay, ui_address,
-                        ui_juggler_address):
-    conf = {'address': ui_address}
-
+async def test_set_rank(patch_autoflush_delay, conf, ui_juggler_address):
     server = Server()
     ui = await hat.monitor.server.ui.create(conf, server)
 

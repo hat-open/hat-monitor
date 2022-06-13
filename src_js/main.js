@@ -113,27 +113,24 @@ function globalComponentsVt() {
                 ]
             ],
             ['tbody', components.map(({cid, mid, name, group, data, rank,
-                                       blessing_req_token,
-                                       blessing_req_timestamp,
-                                       blessing_res_token,
-                                       blessing_res_ready}) =>
+                                       blessing_req, blessing_res}) =>
                 ['tr',
                     ['td.col-id', String(cid)],
                     ['td.col-id', String(mid)],
                     ['td.col-name', name || ''],
                     ['td.col-group', group || ''],
-                    ['td.col-data', data || ''],
+                    ['td.col-data', JSON.stringify(data)],
                     ['td.col-rank', String(rank)],
-                    ['td.col-blessing-req-token', (blessing_req_token !== null
-                                                   ? String(blessing_req_token)
+                    ['td.col-blessing-req-token', (blessing_req.token !== null
+                                                   ? String(blessing_req.token)
                                                    : '')],
-                    ['td.col-blessing-req-timestamp', (blessing_req_timestamp !== null
-                                                       ? formatTs(blessing_req_timestamp)
+                    ['td.col-blessing-req-timestamp', (blessing_req.timestamp !== null
+                                                       ? formatTs(blessing_req.timestamp)
                                                        : '')],
-                    ['td.col-blessing-res-token', (blessing_res_token !== null
-                                                   ? String(blessing_res_token)
+                    ['td.col-blessing-res-token', (blessing_res.token !== null
+                                                   ? String(blessing_res.token)
                                                    : '')],
-                    ['td.col-blessing-res-ready', String(blessing_res_ready)]
+                    ['td.col-blessing-res-ready', String(blessing_res.ready)]
                 ]
             )]
         ]

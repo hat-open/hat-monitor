@@ -106,18 +106,18 @@ class _Connection:
                              'data': i.data,
                              'rank': i.rank}
                             for i in self._server.local_components]
-        global_components = [{'cid': i.cid,
-                              'mid': i.mid,
-                              'name': i.name,
-                              'group': i.group,
-                              'data': i.data,
-                              'rank': i.rank,
-                              'blessing_req_token': i.blessing_req.token,
-                              'blessing_req_timestamp':
-                                  i.blessing_req.timestamp,
-                              'blessing_res_token': i.blessing_res.token,
-                              'blessing_res_ready': i.blessing_res.ready}
-                             for i in self._server.global_components]
+        global_components = [
+            {'cid': i.cid,
+             'mid': i.mid,
+             'name': i.name,
+             'group': i.group,
+             'data': i.data,
+             'rank': i.rank,
+             'blessing_req': {'token': i.blessing_req.token,
+                              'timestamp': i.blessing_req.timestamp},
+             'blessing_res': {'token': i.blessing_res.token,
+                              'ready': i.blessing_res.ready}}
+            for i in self._server.global_components]
         data = {'mid': self._server.mid,
                 'local_components': local_components,
                 'global_components': global_components}
