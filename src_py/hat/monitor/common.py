@@ -86,7 +86,7 @@ def component_info_to_sbs(info: ComponentInfo) -> sbs.Data:
             'data': json.encode(info.data),
             'rank': info.rank,
             'blessingReq': blessing_req_to_sbs(info.blessing_req),
-            'blessingRes': blessing_res_to_sbs(info.blessing_req)}
+            'blessingRes': blessing_res_to_sbs(info.blessing_res)}
 
 
 def component_info_from_sbs(data: sbs.Data) -> ComponentInfo:

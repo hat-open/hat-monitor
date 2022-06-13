@@ -1,4 +1,6 @@
+import asyncio
 import pytest
+import time
 
 from hat import aio
 from hat import util
@@ -100,7 +102,11 @@ async def test_create(master_address):
 
     assert master.is_open
 
-    await master.async_close()
+    master.close()
+    await master.wait_closing()
+    assert master.is_closing
+    await master.wait_closed()
+    assert master.is_closed
 
 
 async def test_set_server(master_address):
@@ -112,10 +118,14 @@ async def test_set_server(master_address):
                                   mid=i * 3 + 1,
                                   name=f'name{i}',
                                   group=f'group{i}',
-                                  address=f'address{i}',
+                                  data={'data': f'data_abc{i}'},
                                   rank=i * 3 + 2,
-                                  blessing=None,
-                                  ready=None)
+                                  blessing_req=common.BlessingReq(
+                                    token=None,
+                                    timestamp=None),
+                                  blessing_res=common.BlessingRes(
+                                    token=None,
+                                    ready=True))
              for i in range(10)]
 
     server = Server()
@@ -148,10 +158,13 @@ async def test_set_server(master_address):
         assert component.cid == info.cid
         assert component.name == info.name
         assert component.group == info.group
-        assert component.address == info.address
+        assert component.data == info.data
         assert component.rank == info.rank
-        assert component.blessing is not None
-        assert component.ready == info.ready
+        assert component.blessing_req.token is not None
+        assert component.blessing_req.token >= 1
+        assert component.blessing_req.timestamp is not None
+        assert component.blessing_req.timestamp > time.time() - 1
+        assert component.blessing_res == info.blessing_res
 
     await master.set_server(None)
 
@@ -170,6 +183,10 @@ async def test_set_server(master_address):
     assert master.active
     assert server.global_components == components
 
+    await server.async_close()
+    await asyncio.sleep(0.001)
+    assert not master.active
+
     await master.async_close()
     await server.async_close()
 
@@ -184,10 +201,14 @@ async def test_slaves(master_address, slave_count):
                                   mid=i * 3 + 1,
                                   name=f'name{i}',
                                   group=f'group{i}',
-                                  address=f'address{i}',
+                                  data={'data': f'data_abc{i}'},
                                   rank=i * 3 + 2,
-                                  blessing=None,
-                                  ready=None)
+                                  blessing_req=common.BlessingReq(
+                                    token=None,
+                                    timestamp=None),
+                                  blessing_res=common.BlessingRes(
+                                    token=None,
+                                    ready=False))
              for i in range(3)]
 
     server = Server()

@@ -34,16 +34,6 @@ def secondary_address(secondary_port):
     return f'tcp+sbs://127.0.0.1:{secondary_port}'
 
 
-@pytest.fixture
-def patch_connect_timeout(monkeypatch):
-    monkeypatch.setattr(hat.monitor.server.slave, 'connect_timeout', 0.1)
-
-
-@pytest.fixture
-def patch_connect_retry_delay(monkeypatch):
-    monkeypatch.setattr(hat.monitor.server.slave, 'connect_retry_delay', 0.1)
-
-
 async def create_master(address):
     master = Master()
     master._conn_queue = aio.Queue()
@@ -154,23 +144,28 @@ class Server(aio.Resource):
         self._change_cbs.notify()
 
 
-async def test_connect(patch_connect_timeout, patch_connect_retry_delay,
-                       primary_address, secondary_address):
+async def test_connect(primary_address, secondary_address):
     master = await create_master(primary_address)
 
     conn = await hat.monitor.server.slave.connect(
         addresses=[secondary_address] * 3,
-        retry_count=3)
+        connect_retry_count=3,
+        connect_timeout=0.1,
+        connect_retry_delay=0.1)
     assert conn is None
 
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(hat.monitor.server.slave.connect(
             addresses=[secondary_address] * 3,
-            retry_count=None), 0.2)
+            connect_retry_count=None,
+            connect_timeout=0.1,
+            connect_retry_delay=0.1), 0.2)
 
     conn = await hat.monitor.server.slave.connect(
         addresses=[secondary_address, primary_address],
-        retry_count=3)
+        connect_retry_count=3,
+        connect_timeout=0.1,
+        connect_retry_delay=0.1)
     assert conn is not None
     assert conn.is_open
     await conn.async_close()
@@ -183,15 +178,20 @@ async def test_slave(primary_address):
                                 mid=2,
                                 name='name',
                                 group='group',
-                                address='address',
+                                data={'data': 'abc'},
                                 rank=3,
-                                blessing=None,
-                                ready=None)
+                                blessing_req=common.BlessingReq(
+                                    token=None,
+                                    timestamp=None),
+                                blessing_res=common.BlessingRes(token=None,
+                                                                ready=False))
 
     server = Server()
     master = await create_master(primary_address)
     slave = await hat.monitor.server.slave.connect(addresses=[primary_address],
-                                                   retry_count=3)
+                                                   connect_retry_count=3,
+                                                   connect_timeout=0.1,
+                                                   connect_retry_delay=0.1)
     slave = hat.monitor.server.slave.Slave(server, slave)
     conn = await master.get_connection()
 
@@ -221,8 +221,7 @@ async def test_slave(primary_address):
     await slave.wait_closed()
 
 
-async def test_run(patch_connect_timeout, patch_connect_retry_delay,
-                   primary_address, secondary_address):
+async def test_run(primary_address, secondary_address):
     primary_master_conf = {'address': primary_address,
                            'default_algorithm': 'BLESS_ALL',
                            'group_algorithms': {}}
@@ -230,8 +229,14 @@ async def test_run(patch_connect_timeout, patch_connect_retry_delay,
                              'default_algorithm': 'BLESS_ALL',
                              'group_algorithms': {}}
 
-    primary_slave_conf = {'parents': []}
-    secondary_slave_conf = {'parents': [primary_address]}
+    primary_slave_conf = {'parents': [],
+                          'connect_retry_count': 3,
+                          'connect_timeout': 0.1,
+                          'connect_retry_delay': 0.1}
+    secondary_slave_conf = {'parents': [primary_address],
+                            'connect_retry_count': 3,
+                            'connect_timeout': 0.1,
+                            'connect_retry_delay': 0.1}
 
     primary_server = Server()
     secondary_server = Server()
@@ -278,6 +283,9 @@ async def test_run(patch_connect_timeout, patch_connect_retry_delay,
     with pytest.raises(asyncio.CancelledError):
         await secondary_run
     await secondary_master.async_close()
+
+    assert primary_server.mid == 0
+    assert primary_master.active
 
     await primary_master.async_close()
     await primary_run

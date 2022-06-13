@@ -61,8 +61,14 @@ async def test_create(server_address):
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(conn.receive(), 0.001)
 
-    await server.async_close()
-    await conn.wait_closed()
+    await conn.async_close()
+    assert server.is_open
+
+    server.close()
+    await server.wait_closing()
+    assert server.is_closing
+    await server.wait_closed()
+    assert server.is_closed
 
 
 @pytest.mark.parametrize("conn_count", [1, 2, 5])
@@ -82,44 +88,77 @@ async def test_local_components(server_address, conn_count):
     assert changes.empty()
 
     conns = []
-    for _ in range(conn_count):
+    for i in range(conn_count):
         conn = await connect(server_address)
         conns.append(conn)
 
         local_components = await changes.get()
         assert len(local_components) == len(conns)
-        for info in local_components:
-            assert info.address is None
-            assert info.rank == conf['default_rank']
-            assert info.blessing is None
-            assert info.ready is None
+
+        for cid, info in enumerate(local_components):
+            assert info == common.ComponentInfo(
+                cid=cid,
+                mid=0,
+                name=None,
+                group=None,
+                data=None,
+                rank=conf['default_rank'],
+                blessing_req=common.BlessingReq(
+                    token=None,
+                    timestamp=None),
+                blessing_res=common.BlessingRes(
+                    token=None,
+                    ready=False))
 
         msg = await conn.receive()
         info = local_components[-1]
-        assert msg.cid == info.cid
-        assert msg.mid == info.mid
-        assert msg.mid == server.mid
+        assert msg.cid == info.cid == i
+        assert msg.mid == info.mid == server.mid == 0
         assert msg.components == server.global_components
 
     for i, conn in enumerate(conns):
         msg = common.MsgClient(name=f'name{i}',
                                group=f'group{i}',
-                               address=f'address{i}',
-                               ready=i)
+                               data={'data': i},
+                               blessing_res=common.BlessingRes(
+                                token=i,
+                                ready=bool(i % 2)))
         conn.send(msg)
 
         local_components = await changes.get()
         assert len(local_components) == len(conns)
         info = local_components[i]
-
-        assert info.name == msg.name
-        assert info.group == msg.group
-        assert info.address == msg.address
-        assert info.ready == msg.ready
+        assert info == common.ComponentInfo(
+                cid=i,
+                mid=0,
+                name=msg.name,
+                group=msg.group,
+                data=msg.data,
+                rank=conf['default_rank'],
+                blessing_req=common.BlessingReq(
+                    token=None,
+                    timestamp=None),
+                blessing_res=msg.blessing_res)
 
         conn.send(msg)
         with pytest.raises(asyncio.TimeoutError):
             await asyncio.wait_for(changes.get(), 0.001)
+
+        blessing_req = common.BlessingReq(token=i,
+                                          timestamp=123 + i)
+        server.update(info.mid, [info._replace(blessing_req=blessing_req)])
+
+        local_components = await changes.get()
+        info = local_components[i]
+        assert info == common.ComponentInfo(
+                cid=i,
+                mid=0,
+                name=msg.name,
+                group=msg.group,
+                data=msg.data,
+                rank=conf['default_rank'],
+                blessing_req=blessing_req,
+                blessing_res=msg.blessing_res)
 
     while conns:
         conn, conns = conns[0], conns[1:]
@@ -140,10 +179,14 @@ async def test_global_components(server_address, conn_count):
                                        mid=i * 3 + 1,
                                        name=f'name{i}',
                                        group=f'group{i}',
-                                       address=f'address{i}',
+                                       data={'data': i},
                                        rank=i * 3 + 2,
-                                       blessing=i * 3 + 3,
-                                       ready=i * 3 + 4)
+                                       blessing_req=common.BlessingReq(
+                                        token=i * 3 + 3,
+                                        timestamp=123 + i),
+                                       blessing_res=common.BlessingRes(
+                                        token=i * 3 + 4,
+                                        ready=True))
                   for i in range(10)]
 
     server = await hat.monitor.server.server.create(conf)
@@ -194,8 +237,9 @@ async def test_set_rank(server_address):
 
     msg = common.MsgClient(name='name',
                            group='group',
-                           address=None,
-                           ready=None)
+                           data=None,
+                           blessing_res=common.BlessingRes(token=None,
+                                                           ready=False))
 
     changes = aio.Queue()
 
