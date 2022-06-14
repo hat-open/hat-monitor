@@ -228,10 +228,11 @@ first monitor server in the list with `connect_timeout`. If the connection
 fails, it tries the second one and so on. If it can't connect to any of its
 superiors, it waits for `connect_retry_delay` and retries again from the first
 monitor server in the list. It will retry `connect_retry_count` times before
-it can proclaim itself as master. The connecting to master process should
-continue if the Monitor Server is master or it is not connected to its
-first superior. Connection parameters `connect_timeout`, `connect_retry_delay`
-and `connect_retry_count` are defined with configuration.
+it can proclaim itself as master. The connecting to master process continues
+until the Monitor Server connects to its first superior, even if the Monitor
+Server is master or connection to some other superior is established.
+Connection parameters `connect_timeout`, `connect_retry_delay` and
+`connect_retry_count` are defined with configuration.
 
 Once a slave Monitor Server connects to the Master Monitor server it sends its
 local state to the master and keeps notifying the master about any change in
