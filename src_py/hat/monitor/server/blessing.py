@@ -101,13 +101,13 @@ def _bless_one(components):
 
     for c in components:
         if c != highlander:
-            blessing = common.Blessing(token=None,
-                                       timestamp=None)
+            blessing = common.BlessingReq(token=None,
+                                          timestamp=None)
             yield c._replace(blessing_req=blessing)
 
         elif c.blessing_req.token is None:
-            blessing = common.Blessing(token=next(_next_tokens),
-                                       timestamp=time.time())
+            blessing = common.BlessingReq(token=next(_next_tokens),
+                                          timestamp=time.time())
             yield c._replace(blessing_req=blessing)
 
         else:
