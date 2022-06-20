@@ -55,7 +55,7 @@ def _bless_all(components):
             yield c._replace(blessing_req=common.BlessingReq(token=None,
                                                              timestamp=None))
 
-        elif c.blessing_req.token is not None:
+        elif _has_blessing(c):
             yield c
 
         else:
@@ -66,24 +66,24 @@ def _bless_all(components):
 
 def _bless_one(components):
 
-    def highlander_survived(highlander, c):
+    def highlander_battle(highlander, c):
         if not highlander:
-            return
+            return c
         if c.rank < highlander.rank:
-            return
+            return c
         if c.rank == highlander.rank:
-            if c.blessing_req.token and not highlander.blessing_req.token:
-                return
-            if c.blessing_req.token and highlander.blessing_req.token:
+            if _has_blessing(c) and not _has_blessing(highlander):
+                return c
+            if _has_blessing(c) and _has_blessing(highlander):
                 if (c.blessing_req.timestamp <
                         highlander.blessing_req.timestamp):
-                    return
-            if (c.blessing_req.token and highlander.blessing_req.token) or (
-                    not c.blessing_req.token and
-                    not highlander.blessing_req.token):
+                    return c
+            if _has_blessing(c) and _has_blessing(highlander) or (
+                    not _has_blessing(c) and
+                    not _has_blessing(highlander)):
                 if c.mid < highlander.mid:
-                    return
-        return True
+                    return c
+        return highlander
 
     highlander = None
     active_exits = False
@@ -92,11 +92,9 @@ def _bless_one(components):
             active_exits = True
         if not c.blessing_res.ready:
             continue
-        if highlander_survived(highlander, c):
-            continue
-        highlander = c
+        highlander = highlander_battle(highlander, c)
 
-    if highlander and not highlander.blessing_req.token and active_exits:
+    if highlander and not _has_blessing(highlander) and active_exits:
         highlander = None
 
     for c in components:
@@ -105,10 +103,15 @@ def _bless_one(components):
                                           timestamp=None)
             yield c._replace(blessing_req=blessing)
 
-        elif c.blessing_req.token is None:
+        elif not _has_blessing(c):
             blessing = common.BlessingReq(token=next(_next_tokens),
                                           timestamp=time.time())
             yield c._replace(blessing_req=blessing)
 
         else:
             yield c
+
+
+def _has_blessing(component):
+    return (component.blessing_req.token and
+            component.blessing_req.timestamp)

@@ -206,6 +206,16 @@ def test_bless_all(components, result):
                         BlessingRes(token=456, ready=True)])),
 
     (group_component_infos(
+         blessing_reqs=[BlessingReq(token=123, timestamp=None),
+                        BlessingReq(token=456, timestamp=3.0)],
+         ranks=[1, 1],
+         blessing_ress=[ready, ready]),
+     group_component_infos(
+         blessing_reqs=[no_blessing, BlessingReq(token=456, timestamp=3.0)],
+         ranks=[1, 1],
+         blessing_ress=[ready, ready])),
+
+    (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=3.0),
                         BlessingReq(token=456, timestamp=2.0)],
          ranks=[1, 1],
