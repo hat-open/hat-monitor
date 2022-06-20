@@ -67,7 +67,7 @@ async def test_client_connect_failure(server_address):
             'component_address': None}
 
     with pytest.raises(ConnectionError):
-        await hat.monitor.client.connect(conf)
+        await hat.monitor.client.connect(conf, None)
 
 
 async def test_client_connect(server_address):
@@ -77,14 +77,15 @@ async def test_client_connect(server_address):
             'component_address': None}
 
     server = await create_server(server_address)
-    client = await hat.monitor.client.connect(conf)
+    client = await hat.monitor.client.connect(conf, None)
     conn = await server.get_connection()
 
     msg = await conn.receive()
     assert msg == common.MsgClient(name=conf['name'],
                                    group=conf['group'],
-                                   address=conf['component_address'],
-                                   ready=None)
+                                   data=conf['component_address'],
+                                   blessing_res=common.BlessingRes(
+                                       token=None, ready=False))
 
     assert server.is_open
     assert client.is_open
@@ -95,39 +96,42 @@ async def test_client_connect(server_address):
     await conn.wait_closed()
 
 
-async def test_client_set_ready(server_address):
+async def test_client_set_blessing_res(server_address):
     conf = {'name': 'name',
             'group': 'group',
             'monitor_address': server_address,
             'component_address': 'address'}
 
     server = await create_server(server_address)
-    client = await hat.monitor.client.connect(conf)
+    client = await hat.monitor.client.connect(conf, 'address')
     conn = await server.get_connection()
 
     msg = await conn.receive()
     assert msg == common.MsgClient(name=conf['name'],
                                    group=conf['group'],
-                                   address=conf['component_address'],
-                                   ready=None)
+                                   data=conf['component_address'],
+                                   blessing_res=common.BlessingRes(
+                                       token=None, ready=False))
 
-    client.set_ready(123)
+    client.set_blessing_res(common.BlessingRes(token=123, ready=True))
     msg = await conn.receive()
     assert msg == common.MsgClient(name=conf['name'],
                                    group=conf['group'],
-                                   address=conf['component_address'],
-                                   ready=123)
+                                   data=conf['component_address'],
+                                   blessing_res=common.BlessingRes(
+                                       token=123, ready=True))
 
-    client.set_ready(123)
+    client.set_blessing_res(common.BlessingRes(token=123, ready=True))
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(conn.receive(), 0.001)
 
-    client.set_ready(None)
+    client.set_blessing_res(common.BlessingRes(token=None, ready=False))
     msg = await conn.receive()
     assert msg == common.MsgClient(name=conf['name'],
                                    group=conf['group'],
-                                   address=conf['component_address'],
-                                   ready=None)
+                                   data=conf['component_address'],
+                                   blessing_res=common.BlessingRes(
+                                       token=None, ready=False))
 
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(conn.receive(), 0.001)
@@ -147,13 +151,15 @@ async def test_client_change(server_address):
                                 mid=2,
                                 name='name',
                                 group='group',
-                                address='address',
+                                data='data',
                                 rank=3,
-                                blessing=4,
-                                ready=5)
+                                blessing_req=common.BlessingReq(
+                                    token=4, timestamp=2.0),
+                                blessing_res=common.BlessingRes(
+                                    token=5, ready=True))
 
     server = await create_server(server_address)
-    client = await hat.monitor.client.connect(conf)
+    client = await hat.monitor.client.connect(conf, 'address')
     conn = await server.get_connection()
 
     changes = aio.Queue()
@@ -199,10 +205,12 @@ async def test_component(server_address):
                                 mid=2,
                                 name='name',
                                 group='group',
-                                address='address',
+                                data='data',
                                 rank=3,
-                                blessing=None,
-                                ready=None)
+                                blessing_req=common.BlessingReq(
+                                    token=None, timestamp=None),
+                                blessing_res=common.BlessingRes(
+                                    token=None, ready=False))
 
     running_queue = aio.Queue()
 
@@ -214,59 +222,63 @@ async def test_component(server_address):
             running_queue.put_nowait(False)
 
     server = await create_server(server_address)
-    client = await hat.monitor.client.connect(conf)
+    client = await hat.monitor.client.connect(conf, 'address')
     component = hat.monitor.client.Component(client, async_run)
-    component.set_enabled(True)
     conn = await server.get_connection()
 
     msg = await conn.receive()
-    assert msg.ready is None
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=False)
     assert component.is_open
     assert running_queue.empty()
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123)])
+    component.set_ready(True)
+
+    msg = await conn.receive()
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=True)
+    assert component.is_open
+    assert running_queue.empty()
+
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=None, ready=True))])
     conn.send(msg)
     msg = await conn.receive()
-    assert msg.ready == 123
-    assert component.is_open
-    assert running_queue.empty()
-
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123,
-                                                     ready=123)])
-    conn.send(msg)
+    assert msg.blessing_res == common.BlessingRes(token=123, ready=True)
     running = await running_queue.get()
     assert running is True
     assert component.is_open
+    assert running_queue.empty()
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(conn.receive(), 0.001)
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=None,
-                                                     ready=123)])
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=None, timestamp=None),
+                               blessing_res=common.BlessingRes(
+                                   token=123, ready=True))])
     conn.send(msg)
     msg = await conn.receive()
-    assert msg.ready is None
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=True)
     running = await running_queue.get()
     assert running is False
-
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=321,
-                                                     ready=None)])
-    conn.send(msg)
-    msg = await conn.receive()
-    assert msg.ready == 321
     assert component.is_open
     assert running_queue.empty()
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=321,
-                                                     ready=321)])
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=321, timestamp=3.0),
+                               blessing_res=common.BlessingRes(
+                                   token=None, ready=True))])
     conn.send(msg)
+    msg = await conn.receive()
+    assert msg.blessing_res == common.BlessingRes(token=321, ready=True)
+    assert component.is_open
     running = await running_queue.get()
     assert running is True
     assert component.is_open
+    assert running_queue.empty()
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(conn.receive(), 0.001)
 
@@ -290,32 +302,43 @@ async def test_component_return(server_address):
                                 mid=2,
                                 name='name',
                                 group='group',
-                                address='address',
+                                data='data',
                                 rank=3,
-                                blessing=None,
-                                ready=None)
+                                blessing_req=common.BlessingReq(
+                                    token=None, timestamp=None),
+                                blessing_res=common.BlessingRes(
+                                    token=None, ready=False))
 
     async def async_run(component):
         return
 
     server = await create_server(server_address)
-    client = await hat.monitor.client.connect(conf)
+    client = await hat.monitor.client.connect(conf, 'address')
     component = hat.monitor.client.Component(client, async_run)
-    component.set_enabled(True)
     conn = await server.get_connection()
 
     msg = await conn.receive()
-    assert msg.ready is None
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=False)
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123)])
+    component.set_ready(True)
+
+    msg = await conn.receive()
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=True)
+
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=None, ready=True))])
     conn.send(msg)
     msg = await conn.receive()
-    assert msg.ready == 123
+    assert msg.blessing_res == common.BlessingRes(token=123, ready=True)
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123,
-                                                     ready=123)])
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=123, ready=True))])
     conn.send(msg)
     await component.wait_closed()
 
@@ -334,32 +357,43 @@ async def test_component_exception(server_address):
                                 mid=2,
                                 name='name',
                                 group='group',
-                                address='address',
+                                data='data',
                                 rank=3,
-                                blessing=None,
-                                ready=None)
+                                blessing_req=common.BlessingReq(
+                                    token=None, timestamp=None),
+                                blessing_res=common.BlessingRes(
+                                    token=None, ready=False))
 
     async def async_run(component):
         raise Exception()
 
     server = await create_server(server_address)
-    client = await hat.monitor.client.connect(conf)
+    client = await hat.monitor.client.connect(conf, 'address')
     component = hat.monitor.client.Component(client, async_run)
-    component.set_enabled(True)
     conn = await server.get_connection()
 
     msg = await conn.receive()
-    assert msg.ready is None
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=False)
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123)])
+    component.set_ready(True)
+
+    msg = await conn.receive()
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=True)
+
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=None, ready=True))])
     conn.send(msg)
     msg = await conn.receive()
-    assert msg.ready == 123
+    assert msg.blessing_res == common.BlessingRes(token=123, ready=True)
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123,
-                                                     ready=123)])
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=123, ready=True))])
     conn.send(msg)
     await component.wait_closed()
 
@@ -368,7 +402,7 @@ async def test_component_exception(server_address):
     await server.async_close()
 
 
-async def test_component_close_before_ready(server_address):
+async def test_component_close_before_token_confirmed(server_address):
     conf = {'name': 'name',
             'group': 'group',
             'monitor_address': server_address,
@@ -378,28 +412,37 @@ async def test_component_close_before_ready(server_address):
                                 mid=2,
                                 name='name',
                                 group='group',
-                                address='address',
+                                data='data',
                                 rank=3,
-                                blessing=None,
-                                ready=None)
+                                blessing_req=common.BlessingReq(
+                                    token=None, timestamp=None),
+                                blessing_res=common.BlessingRes(
+                                    token=None, ready=False))
 
     async def async_run(component):
         await asyncio.Future()
 
     server = await create_server(server_address)
-    client = await hat.monitor.client.connect(conf)
+    client = await hat.monitor.client.connect(conf, 'address')
     component = hat.monitor.client.Component(client, async_run)
-    component.set_enabled(True)
     conn = await server.get_connection()
 
     msg = await conn.receive()
-    assert msg.ready is None
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=False)
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123)])
+    component.set_ready(True)
+
+    msg = await conn.receive()
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=True)
+
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=None, ready=True))])
     conn.send(msg)
     msg = await conn.receive()
-    assert msg.ready == 123
+    assert msg.blessing_res == common.BlessingRes(token=123, ready=True)
 
     await conn.async_close()
     await client.wait_closed()
@@ -408,7 +451,7 @@ async def test_component_close_before_ready(server_address):
     await server.async_close()
 
 
-async def test_component_enable(server_address):
+async def test_component_ready(server_address):
     conf = {'name': 'name',
             'group': 'group',
             'monitor_address': server_address,
@@ -418,10 +461,12 @@ async def test_component_enable(server_address):
                                 mid=2,
                                 name='name',
                                 group='group',
-                                address='address',
+                                data='data',
                                 rank=3,
-                                blessing=None,
-                                ready=None)
+                                blessing_req=common.BlessingReq(
+                                    token=None, timestamp=None),
+                                blessing_res=common.BlessingRes(
+                                    token=None, ready=False))
 
     running_queue = aio.Queue()
 
@@ -433,70 +478,80 @@ async def test_component_enable(server_address):
             running_queue.put_nowait(False)
 
     server = await create_server(server_address)
-    client = await hat.monitor.client.connect(conf)
+    client = await hat.monitor.client.connect(conf, 'address')
     component = hat.monitor.client.Component(client, async_run)
     conn = await server.get_connection()
 
     msg = await conn.receive()
-    assert msg.ready is None
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=False)
+    assert running_queue.empty()
 
-    msg = await conn.receive()
-    assert msg.ready == 0
-
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123,
-                                                     ready=0)])
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=None, ready=False))])
     conn.send(msg)
 
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(conn.receive(), 0.001)
     assert running_queue.empty()
 
-    component.set_enabled(True)
+    component.set_ready(True)
 
     msg = await conn.receive()
-    assert msg.ready == 123
-
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123,
-                                                     ready=123)])
-    conn.send(msg)
-
+    assert msg.blessing_res == common.BlessingRes(token=123, ready=True)
     running = await running_queue.get()
     assert running is True
     assert running_queue.empty()
 
-    component.set_enabled(False)
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=123, ready=True))])
+    conn.send(msg)
 
+    assert running_queue.empty()
+
+    component.set_ready(False)
+
+    msg = await conn.receive()
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=False)
     running = await running_queue.get()
     assert running is False
     assert running_queue.empty()
 
-    msg = await conn.receive()
-    assert msg.ready == 0
-
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=123,
-                                                     ready=0)])
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=123, timestamp=2.0),
+                               blessing_res=common.BlessingRes(
+                                   token=None, ready=False))])
     conn.send(msg)
 
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(conn.receive(), 0.001)
     assert running_queue.empty()
 
-    msg = common.MsgServer(cid=1, mid=2,
-                           components=[info._replace(blessing=None,
-                                                     ready=0)])
+    msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
+                               blessing_req=common.BlessingReq(
+                                   token=None, timestamp=None),
+                               blessing_res=common.BlessingRes(
+                                   token=None, ready=False))])
     conn.send(msg)
 
     with pytest.raises(asyncio.TimeoutError):
         await asyncio.wait_for(conn.receive(), 0.001)
     assert running_queue.empty()
 
-    component.set_enabled(True)
+    component.set_ready(True)
 
     msg = await conn.receive()
-    assert msg.ready is None
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=True)
+
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(conn.receive(), 0.001)
+    assert running_queue.empty()
 
     await component.async_close()
     await client.async_close()
