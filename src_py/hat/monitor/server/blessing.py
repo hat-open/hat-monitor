@@ -86,16 +86,16 @@ def _bless_one(components):
         return highlander
 
     highlander = None
-    active_exits = False
     for c in components:
-        if c.blessing_res.token:
-            active_exits = True
         if not c.blessing_res.ready:
             continue
         highlander = highlander_battle(highlander, c)
 
-    if highlander and not _has_blessing(highlander) and active_exits:
-        highlander = None
+    if highlander:
+        for c in components:
+            if c.blessing_res.token and c != highlander:
+                highlander = None
+                break
 
     for c in components:
         if c != highlander:
