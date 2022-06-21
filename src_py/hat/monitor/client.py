@@ -283,7 +283,7 @@ class Component(aio.Resource):
                                               ready=self._ready)
 
             self._client.set_blessing_res(blessing_res)
-            if self._ready and token:
+            if token is not None:
                 break
 
             await self._change_queue.get_until_empty()
@@ -295,7 +295,7 @@ class Component(aio.Resource):
             blessing_res = common.BlessingRes(token=token,
                                               ready=self._ready)
 
-            if not (self._ready and token):
+            if token is None:
                 self._client.set_blessing_res(blessing_res)
                 break
 
