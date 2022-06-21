@@ -86,186 +86,137 @@ def test_bless_all(components, result):
     assert_infos_equal(result, calculated_result)
 
 
-@pytest.mark.parametrize("components, result", [
+@pytest.mark.parametrize("components, blessing_reqs", [
     ([], []),
 
     (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[ready, ready],
                            ranks=[1, 1]),
-     group_component_infos(blessing_reqs=[generic_blessing, no_blessing],
-                           blessing_ress=[ready, ready],
-                           ranks=[1, 1])),
+     [generic_blessing, no_blessing]),
 
     (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[not_ready, ready],
                            ranks=[1, 1]),
-     group_component_infos(blessing_reqs=[no_blessing, generic_blessing],
-                           blessing_ress=[not_ready, ready],
-                           ranks=[1, 1])),
+     [no_blessing, generic_blessing]),
 
     (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[not_ready, not_ready],
                            ranks=[1, 1]),
-     group_component_infos(blessing_reqs=[no_blessing, no_blessing],
-                           blessing_ress=[not_ready, not_ready],
-                           ranks=[1, 1])),
+     [no_blessing, no_blessing]),
 
     (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[ready, ready],
                            ranks=[1, 2]),
-     group_component_infos(blessing_reqs=[generic_blessing, no_blessing],
-                           blessing_ress=[ready, ready],
-                           ranks=[1, 2])),
+     [generic_blessing, no_blessing]),
 
     (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[ready, ready],
                            ranks=[2, 1]),
-     group_component_infos(blessing_reqs=[no_blessing, generic_blessing],
-                           blessing_ress=[ready, ready],
-                           ranks=[2, 1])),
+     [no_blessing, generic_blessing]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0), no_blessing],
          blessing_ress=[ready, ready],
          ranks=[1, 1]),
-     group_component_infos(
-         blessing_reqs=[BlessingReq(token=123, timestamp=2.0), no_blessing],
-         blessing_ress=[ready, ready],
-         ranks=[1, 1])),
+     [BlessingReq(token=123, timestamp=2.0), no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[no_blessing, BlessingReq(token=123, timestamp=2.0)],
          blessing_ress=[ready, ready],
          ranks=[1, 1]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, BlessingReq(token=123, timestamp=2.0)],
-         blessing_ress=[ready, ready],
-         ranks=[1, 1])),
+     [no_blessing, BlessingReq(token=123, timestamp=2.0)]),
 
     (group_component_infos(
          blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 1],
          blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 1],
-         blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)])),
+                        BlessingRes(token=456, ready=True)],
+         ranks=[1, 1]),
+     [no_blessing, no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0), no_blessing],
-         ranks=[1, 1],
          blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 1],
-         blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)])),
+                        BlessingRes(token=456, ready=True)],
+         ranks=[1, 1]),
+     [no_blessing, no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[no_blessing, BlessingReq(token=456, timestamp=2.0)],
-         ranks=[1, 1],
          blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 1],
-         blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)])),
+                        BlessingRes(token=456, ready=True)],
+         ranks=[1, 1]),
+     [no_blessing, no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 2],
-         blessing_ress=[not_ready, ready]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, generic_blessing],
-         ranks=[1, 2],
-         blessing_ress=[not_ready, ready])),
+         blessing_ress=[not_ready, ready],
+         ranks=[1, 2]),
+     [no_blessing, generic_blessing]),
 
     (group_component_infos(
          blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 2],
-         blessing_ress=[not_ready, not_ready]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 2],
-         blessing_ress=[not_ready, not_ready])),
+         blessing_ress=[not_ready, not_ready],
+         ranks=[1, 2]),
+     [no_blessing, no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0),
                         BlessingReq(token=456, timestamp=3.0)],
-         ranks=[1, 1],
          blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 1],
-         blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)])),
+                        BlessingRes(token=456, ready=True)],
+         ranks=[1, 1]),
+     [no_blessing, no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0),
                         no_blessing],
-         ranks=[1, 1],
-         blessing_ress=[ready, BlessingRes(token=456, ready=True)]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 1],
-         blessing_ress=[ready, BlessingRes(token=456, ready=True)])),
+         blessing_ress=[ready, BlessingRes(token=456, ready=True)],
+         ranks=[1, 1]),
+     [no_blessing, no_blessing]),
 
     # if no timestamp, not considered as blessed
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=None),
                         BlessingReq(token=456, timestamp=3.0)],
-         ranks=[1, 1],
-         blessing_ress=[ready, ready]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, BlessingReq(token=456, timestamp=3.0)],
-         ranks=[1, 1],
-         blessing_ress=[ready, ready])),
+         blessing_ress=[ready, ready],
+         ranks=[1, 1]),
+     [no_blessing, BlessingReq(token=456, timestamp=3.0)]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=3.0),
                         BlessingReq(token=456, timestamp=2.0)],
-         ranks=[1, 1],
          blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
-         ranks=[1, 1],
-         blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)])),
+                        BlessingRes(token=456, ready=True)],
+         ranks=[1, 1]),
+     [no_blessing, no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0),
                         BlessingReq(token=456, timestamp=2.0)],
-         ranks=[1, 1],
-         mids=[0, 1],
          blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
+                        BlessingRes(token=456, ready=True)],
          ranks=[1, 1],
-         mids=[0, 1],
-         blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)])),
+         mids=[0, 1]),
+     [no_blessing, no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0),
                         BlessingReq(token=456, timestamp=2.0)],
-         ranks=[1, 1],
-         mids=[1, 0],
          blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)]),
-     group_component_infos(
-         blessing_reqs=[no_blessing, no_blessing],
+                        BlessingRes(token=456, ready=True)],
          ranks=[1, 1],
-         mids=[1, 0],
-         blessing_ress=[BlessingRes(token=123, ready=True),
-                        BlessingRes(token=456, ready=True)])),
+         mids=[1, 0]),
+     [no_blessing, no_blessing]),
 ])
-def test_bless_one(components, result):
+def test_bless_one(components, blessing_reqs):
     calculated_result = calculate(components, {}, Algorithm.BLESS_ONE)
+    result = [component_info(cid=component.cid,
+                             mid=component.mid,
+                             name=component.name,
+                             group=component.group,
+                             data=component.data,
+                             rank=component.rank,
+                             blessing_req=blessing_req,
+                             blessing_res=component.blessing_res)
+              for component, blessing_req in zip(components, blessing_reqs)]
     assert_infos_equal(result, calculated_result)
