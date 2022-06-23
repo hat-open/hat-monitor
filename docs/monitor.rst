@@ -1,5 +1,3 @@
-.. _monitor:
-
 Monitor Server
 ==============
 
@@ -277,8 +275,6 @@ of master should not be dependent on receiving initial `MsgSlave` and should
 continue sending `MsgMaster` on every state change even if no `MsgSlave` is
 received.
 
-.. |arr| unicode:: U+003E
-
 
 Server client communication
 ---------------------------
@@ -511,3 +507,6 @@ Configuration
 
 .. literalinclude:: ../schemas_json/main.yaml
     :language: yaml
+
+
+.. |arr| unicode:: U+003E

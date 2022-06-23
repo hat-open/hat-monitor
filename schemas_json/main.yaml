@@ -13,8 +13,7 @@ required:
     - ui
 properties:
     type:
-        enum:
-            - monitor
+        const: monitor
         description: configuration type identification
     version:
         type: string

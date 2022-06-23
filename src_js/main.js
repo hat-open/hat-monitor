@@ -59,7 +59,7 @@ function localComponentsVt() {
                     ['td.col-name', name || ''],
                     ['td.col-group', group || ''],
                     ['td.col-data', data || ''],
-                    ['td.col-rank',
+                    ['td.col-rank-control',
                         ['div',
                             ['button', {
                                 on: {
@@ -106,10 +106,10 @@ function globalComponentsVt() {
                     ['th.col-group', 'Group'],
                     ['th.col-data', 'Data'],
                     ['th.col-rank', 'Rank'],
-                    ['th.col-blessing-req-token', 'Token'],
-                    ['th.col-blessing-req-timestamp', 'Timestamp'],
-                    ['th.col-blessing-res-token', 'Token'],
-                    ['th.col-blessing-res-ready', 'Ready']
+                    ['th.col-token', 'Token'],
+                    ['th.col-timestamp', 'Timestamp'],
+                    ['th.col-token', 'Token'],
+                    ['th.col-ready', 'Ready']
                 ]
             ],
             ['tbody', components.map(({cid, mid, name, group, data, rank,
@@ -121,16 +121,18 @@ function globalComponentsVt() {
                     ['td.col-group', group || ''],
                     ['td.col-data', JSON.stringify(data)],
                     ['td.col-rank', String(rank)],
-                    ['td.col-blessing-req-token', (blessing_req.token !== null
-                                                   ? String(blessing_req.token)
-                                                   : '')],
-                    ['td.col-blessing-req-timestamp', (blessing_req.timestamp !== null
-                                                       ? formatTs(blessing_req.timestamp)
-                                                       : '')],
-                    ['td.col-blessing-res-token', (blessing_res.token !== null
-                                                   ? String(blessing_res.token)
-                                                   : '')],
-                    ['td.col-blessing-res-ready', String(blessing_res.ready)]
+                    ['td.col-token', (blessing_req.token !== null
+                                      ? String(blessing_req.token)
+                                      : '')],
+                    ['td.col-timestamp', (blessing_req.timestamp !== null
+                                          ? formatTs(blessing_req.timestamp)
+                                          : '')],
+                    ['td.col-token', (blessing_res.token !== null
+                                      ? String(blessing_res.token)
+                                      : '')],
+                    ['td.col-ready', (blessing_res.ready
+                                      ? ['span.fa.fa-check']
+                                      : ['span.fa.fa-times'])]
                 ]
             )]
         ]

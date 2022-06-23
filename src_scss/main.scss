@@ -1,35 +1,54 @@
-@import 'grid';
-@import 'fonts/roboto';
+@import 'color';
+@import 'fonts/inter';
 @import 'fonts/fontawesome';
 
 
 html, body {
-    margin: 0px;
-    font-family: 'Roboto';
+    margin: 0;
+    font-family: 'Inter';
+    font-size: 12pt;
 }
 
 .monitor {
     max-width: 960px;
-    margin: 10px auto;
+    margin: 1rem auto;
     display: flex;
     flex-direction: column;
     align-items: stretch;
 
     table {
-        @extend %table-grid;
+        border-spacing: 0;
+        width: 100%;
+        border: 1px solid $color-grey-400;
 
-        th.col-id { width: 70px; }
-        th.col-name {}
-        th.col-group { width: 150px; }
-        th.col-data { width: 150px; }
-        th.col-blessing-req-token { width: 70px; }
-        th.col-blessing-req-timestamp { width: 150px; }
-        th.col-blessing-res-token { width: 70px; }
-        th.col-blessing-res-ready { width: 70px; }
-        th.col-rank { width: 120px; }
+        th {
+            background-color: $color-grey-200;
+        }
 
-        td { text-align: center; }
-        td.col-rank {
+        td, th {
+            padding: 0.2rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        td {
+            text-align: center;
+            border-top: 1px solid $color-grey-400;
+
+            &:not(:last-child) {
+                border-right: 1px solid $color-grey-300;
+            }
+        }
+
+        .col-id { width: 3rem; }
+        .col-group { width: 8rem; }
+        .col-rank { width: 4rem; }
+        .col-token { width: 4rem; }
+        .col-timestamp { width: 8rem; }
+        .col-ready { width: 4rem; }
+        .col-rank-control { width: 6rem; }
+
+        td.col-rank-control {
             & > div {
                 display: flex;
                 justify-content: space-between;

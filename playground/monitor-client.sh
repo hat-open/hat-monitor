@@ -7,6 +7,7 @@ import asyncio
 import contextlib
 
 from hat import aio
+from hat.monitor import common
 import hat.monitor.client
 
 def main():
@@ -18,8 +19,8 @@ async def async_main():
     conn = await hat.monitor.client.connect({
         'name': 'name',
         'group': 'group',
-        'monitor_address': 'tcp+sbs://127.0.0.1:23010',
-        'component_address': 'address'})
+        'monitor_address': 'tcp+sbs://127.0.0.1:23010'})
+    conn.set_blessing_res(common.BlessingRes(None, True))
     try:
         await conn.wait_closing()
     finally:

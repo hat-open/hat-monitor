@@ -33,6 +33,9 @@ master:
     group_algorithms: {}
 slave:
     parents: []
+    connect_timeout: 5
+    connect_retry_count: 3
+    connect_retry_delay: 5
 ui:
     address: "http://127.0.0.1:23022"
 EOF
