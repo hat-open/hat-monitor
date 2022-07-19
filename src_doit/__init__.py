@@ -5,21 +5,20 @@ import tempfile
 from hat import json
 from hat import sbs
 from hat.doit import common
+from hat.doit.docs import (build_sphinx,
+                           build_pdoc)
 from hat.doit.py import (build_wheel,
                          run_pytest,
                          run_flake8)
-from hat.doit.docs import (SphinxOutputType,
-                           build_sphinx,
-                           build_pdoc)
 
 
 __all__ = ['task_clean_all',
+           'task_node_modules',
            'task_build',
            'task_check',
            'task_test',
            'task_docs',
            'task_ui',
-           'task_deps',
            'task_json_schema_repo',
            'task_sbs_repo']
 
@@ -50,6 +49,11 @@ def task_clean_all():
                                         sbs_repo_path])]}
 
 
+def task_node_modules():
+    """Install node_modules"""
+    return {'actions': ['yarn install --silent']}
+
+
 def task_build():
     """Build"""
 
@@ -61,7 +65,6 @@ def task_build():
             description='Hat monitor',
             url='https://github.com/hat-open/hat-monitor',
             license=common.License.APACHE2,
-            packages=['hat'],
             console_scripts=['hat-monitor = hat.monitor.server.main:main'])
 
     return {'actions': [build],
@@ -87,19 +90,21 @@ def task_test():
 
 def task_docs():
     """Docs"""
-    return {'actions': [(build_sphinx, [SphinxOutputType.HTML,
-                                        docs_dir,
-                                        build_docs_dir]),
-                        (build_pdoc, ['hat.monitor',
-                                      build_docs_dir / 'py_api'])],
+
+    def build():
+        build_sphinx(src_dir=docs_dir,
+                     dst_dir=build_docs_dir,
+                     project='hat-monitor',
+                     extensions=['sphinx.ext.graphviz',
+                                 'sphinxcontrib.programoutput'])
+
+        build_pdoc(module='hat.monitor',
+                   dst_dir=build_docs_dir / 'py_api')
+
+    return {'actions': [build],
             'task_dep': ['ui',
                          'json_schema_repo',
                          'sbs_repo']}
-
-
-def task_deps():
-    """Install dependencies"""
-    return {'actions': ['yarn install --silent']}
 
 
 def task_ui():
@@ -122,7 +127,7 @@ def task_ui():
 
     return {'actions': [build],
             'pos_arg': 'args',
-            'task_dep': ['deps']}
+            'task_dep': ['node_modules']}
 
 
 def task_json_schema_repo():

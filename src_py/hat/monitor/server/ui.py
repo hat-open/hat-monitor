@@ -1,6 +1,7 @@
 """Implementation of web server UI"""
 
-from pathlib import Path
+import contextlib
+import importlib.resources
 import logging
 import urllib
 
@@ -12,12 +13,6 @@ import hat.monitor.server.server
 
 mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
-
-package_path: Path = Path(__file__).parent
-"""Python package path"""
-
-ui_path: Path = package_path / 'ui'
-"""Web ui directory path"""
 
 autoflush_delay: float = 0.2
 """Juggler autoflush delay"""
@@ -40,11 +35,17 @@ async def create(conf: json.Data,
     srv = WebServer()
     srv._server = server
 
+    exit_stack = contextlib.ExitStack()
+    ui_path = exit_stack.enter_context(
+        importlib.resources.path(__package__, 'ui'))
+
     srv._srv = await juggler.listen(host=addr.hostname,
                                     port=addr.port,
                                     connection_cb=srv._on_connection,
                                     static_dir=ui_path,
                                     autoflush_delay=autoflush_delay)
+
+    srv.async_group.spawn(aio.call_on_cancel, exit_stack.close)
 
     mlog.debug("web server listening on %s", conf['address'])
     return srv

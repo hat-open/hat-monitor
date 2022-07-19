@@ -1,6 +1,6 @@
 """Common functionality shared between clients and monitor server"""
 
-from pathlib import Path
+import importlib.resources
 import typing
 
 from hat import chatter
@@ -8,15 +8,15 @@ from hat import json
 from hat import sbs
 
 
-package_path = Path(__file__).parent
+with importlib.resources.path(__package__, 'json_schema_repo.json') as _path:
+    json_schema_repo: json.SchemaRepository = json.SchemaRepository(
+        json.json_schema_repo,
+        json.SchemaRepository.from_json(_path))
 
-json_schema_repo: json.SchemaRepository = json.SchemaRepository(
-    json.json_schema_repo,
-    json.SchemaRepository.from_json(package_path / 'json_schema_repo.json'))
-
-sbs_repo: sbs.Repository = sbs.Repository(
-    chatter.sbs_repo,
-    sbs.Repository.from_json(package_path / 'sbs_repo.json'))
+with importlib.resources.path(__package__, 'sbs_repo.json') as _path:
+    sbs_repo: sbs.Repository = sbs.Repository(
+        chatter.sbs_repo,
+        sbs.Repository.from_json(_path))
 
 
 class BlessingReq(typing.NamedTuple):

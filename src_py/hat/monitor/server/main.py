@@ -21,9 +21,6 @@ import hat.monitor.server.ui
 mlog: logging.Logger = logging.getLogger('hat.monitor.server.main')
 """Module logger"""
 
-package_path: Path = Path(__file__).parent
-"""Python package path"""
-
 user_conf_dir: Path = Path(appdirs.user_config_dir('hat'))
 """User configuration directory path"""
 

@@ -1,7 +1,7 @@
 appdirs ~= 1.4.4
-hat-aio ~= 0.6.1
-hat-chatter ~= 0.5.1
-hat-json ~= 0.5.6
-hat-juggler ~= 0.5.7
-hat-sbs ~= 0.5.4
-hat-util ~= 0.5.6
+hat-aio ~= 0.6.3
+hat-chatter ~= 0.5.3
+hat-json ~= 0.5.8
+hat-juggler ~= 0.5.8
+hat-sbs ~= 0.5.6
+hat-util ~= 0.5.8
