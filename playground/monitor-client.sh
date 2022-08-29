@@ -16,10 +16,13 @@ def main():
         aio.run_asyncio(async_main())
 
 async def async_main():
-    conn = await hat.monitor.client.connect({
-        'name': 'name',
-        'group': 'group',
-        'monitor_address': 'tcp+sbs://127.0.0.1:23010'})
+    conf ={'name': 'name',
+           'group': 'group',
+           'monitor_address': 'tcp+sbs://127.0.0.1:23010'}
+    data = {'abcabcabc1': 'abcabcabc1',
+            'abcabcabc2': 'abcabcabc2',
+            'abcabcabc3': 'abcabcabc3'}
+    conn = await hat.monitor.client.connect(conf, data)
     conn.set_blessing_res(common.BlessingRes(None, True))
     try:
         await conn.wait_closing()

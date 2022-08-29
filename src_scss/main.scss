@@ -20,6 +20,7 @@ html, body {
         border-spacing: 0;
         width: 100%;
         border: 1px solid $color-grey-400;
+        table-layout: fixed;
 
         th {
             background-color: $color-grey-200;
@@ -27,8 +28,12 @@ html, body {
 
         td, th {
             padding: 0.2rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        }
+
+        tr.hidden {
+            th {
+                padding: 0;
+            }
         }
 
         td {
@@ -42,12 +47,17 @@ html, body {
 
         .col-id { width: 3rem; }
         .col-group { width: 8rem; }
-        .col-data { max-width: 40rem; }
         .col-rank { width: 4rem; }
         .col-token { width: 4rem; }
         .col-timestamp { width: 8rem; }
         .col-ready { width: 4rem; }
         .col-rank-control { width: 6rem; }
+
+        .col-name, .col-group, .col-data {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         td.col-rank-control {
             & > div {

@@ -50,15 +50,33 @@ function localComponentsVt() {
                     ['th.col-name', 'Name'],
                     ['th.col-group', 'Group'],
                     ['th.col-data', 'Data'],
-                    ['th.col-rank', 'Rank']
+                    ['th.col-rank-control', 'Rank']
                 ]
             ],
-            ['tbody', components.map(({cid, name, group, data, rank}) =>
-                ['tr',
+            ['tbody', components.map(({cid, name, group, data, rank}) => {
+                name = name || '';
+                group = group || '';
+                data = JSON.stringify(data);
+                return ['tr',
                     ['td.col-id', String(cid)],
-                    ['td.col-name', name || ''],
-                    ['td.col-group', group || ''],
-                    ['td.col-data', data || ''],
+                    ['td.col-name', {
+                        props: {
+                            title: name
+                        }},
+                        name
+                    ],
+                    ['td.col-group', {
+                        props: {
+                            title: group
+                        }},
+                        group
+                    ],
+                    ['td.col-data', {
+                        props: {
+                            title: data
+                        }},
+                        data
+                    ],
                     ['td.col-rank-control',
                         ['div',
                             ['button', {
@@ -76,8 +94,8 @@ function localComponentsVt() {
                             ]
                         ]
                     ]
-                ]
-            )]
+                ];
+            })]
         ]
     ];
 }
@@ -89,13 +107,25 @@ function globalComponentsVt() {
         ['h1', 'Global components'],
         ['table',
             ['thead',
+                ['tr.hidden',
+                    ['th.col-id'],
+                    ['th.col-id'],
+                    ['th.col-name'],
+                    ['th.col-group'],
+                    ['th.col-data'],
+                    ['th.col-rank'],
+                    ['th.col-token'],
+                    ['th.col-timestamp'],
+                    ['th.col-token'],
+                    ['th.col-ready']
+                ],
                 ['tr',
-                    ['th'],
-                    ['th'],
-                    ['th'],
-                    ['th'],
-                    ['th'],
-                    ['th'],
+                    ['th.col-id'],
+                    ['th.col-id'],
+                    ['th.col-name'],
+                    ['th.col-group'],
+                    ['th.col-data'],
+                    ['th.col-rank'],
                     ['th', { attrs: { colspan: '2' } }, 'Blessing req'],
                     ['th', { attrs: { colspan: '2' } }, 'Blessing res'],
                 ],
@@ -113,13 +143,31 @@ function globalComponentsVt() {
                 ]
             ],
             ['tbody', components.map(({cid, mid, name, group, data, rank,
-                                       blessing_req, blessing_res}) =>
-                ['tr',
+                                       blessing_req, blessing_res}) => {
+                name = name || '';
+                group = group || '';
+                data = JSON.stringify(data);
+                return ['tr',
                     ['td.col-id', String(cid)],
                     ['td.col-id', String(mid)],
-                    ['td.col-name', name || ''],
-                    ['td.col-group', group || ''],
-                    ['td.col-data', JSON.stringify(data)],
+                    ['td.col-name', {
+                        props: {
+                            title: name
+                        }},
+                        name
+                    ],
+                    ['td.col-group', {
+                        props: {
+                            title: group
+                        }},
+                        group
+                    ],
+                    ['td.col-data', {
+                        props: {
+                            title: data
+                        }},
+                        data
+                    ],
                     ['td.col-rank', String(rank)],
                     ['td.col-token', (blessing_req.token !== null
                                       ? String(blessing_req.token)
@@ -133,8 +181,8 @@ function globalComponentsVt() {
                     ['td.col-ready', (blessing_res.ready
                                       ? ['span.fa.fa-check']
                                       : ['span.fa.fa-times'])]
-                ]
-            )]
+                ];
+            })]
         ]
     ];
 }
