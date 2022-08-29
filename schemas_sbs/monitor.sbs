@@ -1,44 +1,44 @@
 module HatMonitor
 
-MsgClient = Tuple {
+MsgClient = Record {
     name:         String
     group:        String
     data:         String
     blessingRes:  BlessingRes
 }
 
-MsgServer = Tuple {
+MsgServer = Record {
     cid:         Integer
     mid:         Integer
     components:  Array(ComponentInfo)
 }
 
-MsgSlave = Tuple {
+MsgSlave = Record {
     components:  Array(ComponentInfo)
 }
 
-MsgMaster = Tuple {
+MsgMaster = Record {
     mid:         Integer
     components:  Array(ComponentInfo)
 }
 
-ComponentInfo = Tuple {
+ComponentInfo = Record {
     cid:          Integer
     mid:          Integer
-    name:         Maybe(String)
-    group:        Maybe(String)
+    name:         Optional(String)
+    group:        Optional(String)
     data:         String
     rank:         Integer
     blessingReq:  BlessingReq
     blessingRes:  BlessingRes
 }
 
-BlessingReq = Tuple {
-    token:      Maybe(Integer)
-    timestamp:  Maybe(Float)
+BlessingReq = Record {
+    token:      Optional(Integer)
+    timestamp:  Optional(Float)
 }
 
-BlessingRes = Tuple {
-    token:  Maybe(Integer)
+BlessingRes = Record {
+    token:  Optional(Integer)
     ready:  Boolean
 }
