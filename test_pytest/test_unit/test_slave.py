@@ -256,15 +256,12 @@ async def test_run(primary_address, secondary_address):
     mid = await secondary_server.mid_queue.get()
     assert mid > 0
     assert primary_server.mid == 0
-    assert not secondary_master.active
 
     primary_run.cancel()
     with pytest.raises(asyncio.CancelledError):
         await primary_run
     await primary_master.async_close()
 
-    while not secondary_master.active:
-        await asyncio.sleep(0.001)
     mid = await secondary_server.mid_queue.get()
     assert mid == 0
 
@@ -277,7 +274,6 @@ async def test_run(primary_address, secondary_address):
     mid = await secondary_server.mid_queue.get()
     assert mid > 0
     assert primary_server.mid == 0
-    assert not secondary_master.active
 
     secondary_run.cancel()
     with pytest.raises(asyncio.CancelledError):
@@ -285,7 +281,6 @@ async def test_run(primary_address, secondary_address):
     await secondary_master.async_close()
 
     assert primary_server.mid == 0
-    assert primary_master.active
 
     await primary_master.async_close()
     await primary_run

@@ -125,14 +125,20 @@ class Slave(aio.Resource):
     async def _slave_loop(self):
         try:
             mlog.debug('connected to master')
-            await self._receive()
 
             with self._server.register_change_cb(self._on_server_change):
                 self._components = self._server.local_components
                 self._send_msg_slave()
 
                 while True:
-                    await self._receive()
+                    msg = await self._conn.receive()
+                    msg_type = msg.data.module, msg.data.type
+
+                    if msg_type != ('HatMonitor', 'MsgMaster'):
+                        raise Exception('unsupported message type')
+
+                    msg_master = common.msg_master_from_sbs(msg.data.data)
+                    self._server.update(msg_master.mid, msg_master.components)
 
         except ConnectionError:
             pass
@@ -141,20 +147,8 @@ class Slave(aio.Resource):
             mlog.warning('slave loop error: %s', e, exc_info=e)
 
         finally:
-            self.async_group.close()
-            self._server.update(0, [])
+            self.close()
             mlog.debug('connection to master closed')
-
-    async def _receive(self):
-        msg = await self._conn.receive()
-        msg_type = msg.data.module, msg.data.type
-
-        if msg_type == ('HatMonitor', 'MsgMaster'):
-            msg_master = common.msg_master_from_sbs(msg.data.data)
-            self._process_msg_master(msg_master)
-
-        else:
-            raise Exception('unsupported message type')
 
     def _on_server_change(self):
         if self._components == self._server.local_components:
@@ -170,6 +164,3 @@ class Slave(aio.Resource):
                 module='HatMonitor',
                 type='MsgSlave',
                 data=common.msg_slave_to_sbs(msg)))
-
-    def _process_msg_master(self, msg_master):
-        self._server.update(msg_master.mid, msg_master.components)

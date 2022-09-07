@@ -264,16 +264,14 @@ module (see `Chatter messages`_). These messages are:
 
 where `s` |arr| `m` represents slave to master communication and `m` |arr| `s`
 represents master to slave communication. When new connection is established,
-master should immediately associate new `mid` with connection and send
-`MsgMaster`. After slave receives this initial `MsgMaster`, it should send
-`MsgSlave` with local state updated with newly received `mid`. Each
-communicating entity (master or slave) should send new state message
-(`MsgMaster` or `MsgSlave`) if any data obtained from `MsgSlave` or `MsgMaster`
-changes. Sending of `MsgMaster` and `MsgSlave` should be implemented
-independent of receiving messages from associated entity. Implementation
-of master should not be dependent on receiving initial `MsgSlave` and should
-continue sending `MsgMaster` on every state change even if no `MsgSlave` is
-received.
+master should immediately associate new `mid` with connection and wait for
+`MsgSlave` sent by slave. After master receives `MsgSlave` and calculates
+new global state, it will send `MsgMaster` to slave. Once initial exchange
+of `MsgSlave` followed by `MsgMaster` finished, each communicating entity
+(master or slave) should send new state message (`MsgMaster` or `MsgSlave`) if
+any data obtained from `MsgSlave` or `MsgMaster` changes. Sending of
+`MsgMaster` and `MsgSlave` should be implemented independent of receiving
+messages from associated entity.
 
 
 Server client communication
@@ -310,6 +308,9 @@ Sending of `MsgServer` and `MsgClient` should be implemented independent of
 receiving messages from associated entity. Implementation of server should not
 be dependent on receiving initial `MsgClient` and should continue sending
 `MsgServer` on every state change even if no `MsgClient` is received.
+
+Server always sends last known global state calculated by master monitor
+server (even in case when connection to master is not established).
 
 
 Component lifetime

@@ -95,7 +95,7 @@ async def test_create(master_address):
 
     master = await hat.monitor.server.master.create(conf)
 
-    assert master.active is False
+    assert master.is_open
 
     conn = await connect(master_address)
     await conn.wait_closed()
@@ -129,29 +129,18 @@ async def test_set_server(master_address):
              for i in range(10)]
 
     server = Server()
-
     changes = aio.Queue()
 
-    def on_change():
-        changes.put_nowait(master.components)
-
     master = await hat.monitor.server.master.create(conf)
-    master.register_change_cb(on_change)
-
-    assert not master.active
+    master.register_change_cb(changes.put_nowait)
 
     await master.set_server(server)
-
-    components = await changes.get()
-    assert components == []
-    assert master.active
-    assert server.global_components == components
+    assert changes.empty()
 
     server.set_local_components(infos)
 
     components = await changes.get()
     assert len(components) == len(infos)
-    assert master.active
     assert server.global_components == components
     for info, component in zip(infos, components):
         assert component.mid == 0
@@ -170,25 +159,16 @@ async def test_set_server(master_address):
 
     components = await changes.get()
     assert components == []
-    assert not master.active
 
     await master.set_server(server)
-
-    components = await changes.get()
-    assert components == []
-    assert master.active
+    assert changes.empty()
 
     components = await changes.get()
     assert len(components) == len(infos)
-    assert master.active
     assert server.global_components == components
 
     await server.async_close()
-    await asyncio.sleep(0.001)
-    assert not master.active
-
     await master.async_close()
-    await server.async_close()
 
 
 @pytest.mark.parametrize("slave_count", [1, 2, 5])
@@ -216,20 +196,16 @@ async def test_slaves(master_address, slave_count):
     await master.set_server(server)
 
     conns = []
-    for _ in range(slave_count):
+    for i in range(slave_count):
         conn = await connect(master_address)
         conns.append(conn)
 
-        msg = await conn.receive()
-        assert msg.mid > 0
-        assert msg.components == []
-
-    for i, conn in enumerate(conns):
         msg = common.MsgSlave(infos)
         conn.send(msg)
 
         for conn in conns:
             msg = await conn.receive()
+            assert msg.mid > 0
             assert len(msg.components) == len(infos) * (i + 1)
 
     assert len(master.components) == len(conns) * len(infos)
