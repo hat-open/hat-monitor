@@ -34,7 +34,6 @@ async def run(conf: json.Data,
 
     async def cleanup():
         await master.set_server(None)
-        server.update(0, [])
         if conn:
             await conn.async_close()
 
@@ -46,8 +45,6 @@ async def run(conf: json.Data,
             return
 
         while True:
-            server.update(0, [])
-
             if not conn or not conn.is_open:
                 conn = await connect(
                     addresses=conf['parents'],
