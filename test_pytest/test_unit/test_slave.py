@@ -284,3 +284,80 @@ async def test_run(primary_address, secondary_address):
 
     await primary_master.async_close()
     await primary_run
+
+
+async def test_secondary_components(primary_address, secondary_address):
+    primary_master_conf = {'address': primary_address,
+                           'default_algorithm': 'BLESS_ALL',
+                           'group_algorithms': {}}
+    secondary_master_conf = {'address': secondary_address,
+                             'default_algorithm': 'BLESS_ALL',
+                             'group_algorithms': {}}
+
+    primary_slave_conf = {'parents': [],
+                          'connect_retry_count': 3,
+                          'connect_timeout': 0.1,
+                          'connect_retry_delay': 0.1}
+    secondary_slave_conf = {'parents': [primary_address],
+                            'connect_retry_count': 3,
+                            'connect_timeout': 0.1,
+                            'connect_retry_delay': 0.1}
+
+    secondary_server = Server()
+
+    secondary_master = await hat.monitor.server.master.create(
+        secondary_master_conf)
+    secondary_run = asyncio.ensure_future(
+        hat.monitor.server.slave.run(secondary_slave_conf, secondary_server,
+                                     secondary_master))
+    info = common.ComponentInfo(cid=1,
+                                mid=0,
+                                name='name',
+                                group='group',
+                                data={'data': 'abc'},
+                                rank=3,
+                                blessing_req=common.BlessingReq(
+                                    token=None,
+                                    timestamp=None),
+                                blessing_res=common.BlessingRes(token=None,
+                                                                ready=False))
+    secondary_server.set_local_components([info])
+
+    g_comps = await secondary_server.global_components_queue.get_until_empty()
+    assert g_comps == [info]
+    l_comps = await secondary_server.local_components_queue.get_until_empty()
+    assert l_comps == g_comps
+    assert secondary_server.mid == 0
+
+    primary_server = Server()
+    primary_master = await hat.monitor.server.master.create(
+        primary_master_conf)
+    primary_run = asyncio.ensure_future(
+        hat.monitor.server.slave.run(primary_slave_conf, primary_server,
+                                     primary_master))
+
+    mid = await secondary_server.mid_queue.get()
+    assert mid == 1
+    g_comps = await secondary_server.global_components_queue.get_until_empty()
+    assert g_comps == [info._replace(mid=1)]
+    l_comps = await secondary_server.local_components_queue.get_until_empty()
+    assert l_comps == g_comps
+
+    primary_run.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await primary_run
+    await primary_master.async_close()
+    await primary_server.async_close()
+
+    mid = await secondary_server.mid_queue.get()
+    assert mid == 0
+    g_comps = await secondary_server.global_components_queue.get_until_empty()
+    assert g_comps == [info._replace(mid=0)]
+    l_comps = await secondary_server.local_components_queue.get_until_empty()
+    assert l_comps == g_comps
+
+    secondary_run.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await secondary_run
+    await secondary_master.async_close()
+    await secondary_server.async_close()
