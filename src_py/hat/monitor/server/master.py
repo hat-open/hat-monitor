@@ -174,7 +174,7 @@ class Master(aio.Resource):
             conn.close()
             if self._mid_components.pop(mid, []):
                 self._update_components()
-            mlog.debug('connection %s closed', self._mid)
+            mlog.debug('connection %s closed', mid)
 
     def _set_mid_components(self, mid, components):
         components = [i._replace(mid=mid) for i in components
