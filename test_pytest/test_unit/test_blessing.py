@@ -134,18 +134,25 @@ def test_bless_all(components, result):
      [no_blessing, no_blessing]),
 
     (group_component_infos(
-         blessing_reqs=[BlessingReq(token=123, timestamp=2.0), no_blessing],
+         blessing_reqs=[BlessingReq(token=1, timestamp=2.0), no_blessing],
          blessing_ress=[BlessingRes(token=123, ready=True),
                         BlessingRes(token=456, ready=True)],
          ranks=[1, 1]),
      [no_blessing, no_blessing]),
 
     (group_component_infos(
+         blessing_reqs=[BlessingReq(token=123, timestamp=2.0), no_blessing],
+         blessing_ress=[BlessingRes(token=123, ready=True),
+                        BlessingRes(token=456, ready=True)],
+         ranks=[1, 1]),
+     [BlessingReq(token=123, timestamp=2.0), no_blessing]),
+
+    (group_component_infos(
          blessing_reqs=[no_blessing, BlessingReq(token=456, timestamp=2.0)],
          blessing_ress=[BlessingRes(token=123, ready=True),
                         BlessingRes(token=456, ready=True)],
          ranks=[1, 1]),
-     [no_blessing, no_blessing]),
+     [no_blessing, BlessingReq(token=456, timestamp=2.0)]),
 
     (group_component_infos(
          blessing_reqs=[no_blessing, no_blessing],
@@ -165,7 +172,7 @@ def test_bless_all(components, result):
          blessing_ress=[BlessingRes(token=123, ready=True),
                         BlessingRes(token=456, ready=True)],
          ranks=[1, 1]),
-     [no_blessing, no_blessing]),
+     [BlessingReq(token=123, timestamp=2.0), no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0),
@@ -188,7 +195,7 @@ def test_bless_all(components, result):
          blessing_ress=[BlessingRes(token=123, ready=True),
                         BlessingRes(token=456, ready=True)],
          ranks=[1, 1]),
-     [no_blessing, no_blessing]),
+     [no_blessing, BlessingReq(token=456, timestamp=2.0)]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0),
@@ -197,7 +204,7 @@ def test_bless_all(components, result):
                         BlessingRes(token=456, ready=True)],
          ranks=[1, 1],
          mids=[0, 1]),
-     [no_blessing, no_blessing]),
+     [BlessingReq(token=123, timestamp=2.0), no_blessing]),
 
     (group_component_infos(
          blessing_reqs=[BlessingReq(token=123, timestamp=2.0),
@@ -206,7 +213,7 @@ def test_bless_all(components, result):
                         BlessingRes(token=456, ready=True)],
          ranks=[1, 1],
          mids=[1, 0]),
-     [no_blessing, no_blessing]),
+     [no_blessing, BlessingReq(token=456, timestamp=2.0)]),
 ])
 def test_bless_one(components, blessing_reqs):
     calculated_result = calculate(components, {}, Algorithm.BLESS_ONE)
