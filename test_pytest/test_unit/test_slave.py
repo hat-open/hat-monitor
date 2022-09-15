@@ -161,6 +161,19 @@ async def test_connect(primary_address, secondary_address):
             connect_timeout=0.1,
             connect_retry_delay=0.1), 0.2)
 
+    with pytest.raises(asyncio.TimeoutError):
+        await asyncio.wait_for(hat.monitor.server.slave.connect(
+            addresses=[secondary_address],
+            connect_retry_count=2,
+            connect_timeout=0.01,
+            connect_retry_delay=0.1), 0.1)
+
+    await asyncio.wait_for(hat.monitor.server.slave.connect(
+            addresses=[secondary_address],
+            connect_retry_count=2,
+            connect_timeout=0.01,
+            connect_retry_delay=0.1), 0.11)
+
     conn = await hat.monitor.server.slave.connect(
         addresses=[secondary_address, primary_address],
         connect_retry_count=3,

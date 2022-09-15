@@ -86,7 +86,7 @@ async def connect(addresses: str,
     """Establish connection with remote master"""
     counter = (range(connect_retry_count) if connect_retry_count
                else itertools.repeat(None))
-    for _ in counter:
+    for count in counter:
         for address in addresses:
             with contextlib.suppress(Exception):
                 try:
@@ -98,7 +98,8 @@ async def connect(addresses: str,
                         await aio.uncancellable(e.result.async_close())
                     raise
                 return conn
-        await asyncio.sleep(connect_retry_delay)
+        if count is None or count < connect_retry_count - 1:
+            await asyncio.sleep(connect_retry_delay)
 
 
 class Slave(aio.Resource):
