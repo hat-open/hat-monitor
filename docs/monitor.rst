@@ -406,15 +406,15 @@ Currently supported algorithms:
             3) the lowest blessing `timestamp`
             4) the lowest `mid`
 
-        Finally, when algorithm defined the component to be blessed, if it
-        doesn't already have request token equal to its response token, and
-        there are components in the group with response tokens, `master` does
-        not bless any component. It waits until all the components from the
-        group have revoked theirs response tokens and only then issues new
-        request token to chosen component and sets new associated timestamp
-        value. In case blessed component already have request token equal to
-        its response token, `master` keeps its request token even if there
-        exists a component with response token in the same group.
+        Finally, when algorithm defined the component to be blessed, if that
+        component doesn't already have request token equal to its response
+        token, and there is another component in the group with response token,
+        `master` does not bless any component. It waits until all the
+        components from the group have revoked their response tokens, and only
+        then, issues new request token to the chosen component. In case
+        component to be blessed already has request token equal to its response
+        token, `master` keeps its request token even if there exists a
+        component with response token in the same group.
 
 
 Components rank
