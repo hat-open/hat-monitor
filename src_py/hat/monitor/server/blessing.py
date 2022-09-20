@@ -91,7 +91,8 @@ def _bless_one(components):
             continue
         highlander = highlander_battle(highlander, c)
 
-    if highlander and not (highlander.blessing_res.token ==
+    if highlander and not (highlander.blessing_res.token and
+                           highlander.blessing_res.token ==
                            highlander.blessing_req.token):
         for c in components:
             if c.blessing_res.token and c != highlander:

@@ -214,6 +214,16 @@ def test_bless_all(components, result):
          ranks=[1, 1],
          mids=[1, 0]),
      [no_blessing, BlessingReq(token=456, timestamp=2.0)]),
+
+    (group_component_infos(
+         blessing_reqs=[no_blessing,
+                        BlessingReq(token=456, timestamp=2.0)],
+         blessing_ress=[ready,
+                        BlessingRes(token=456, ready=True)],
+         ranks=[1, 2],
+         mids=[0, 1]),
+     [no_blessing, no_blessing]),
+
 ])
 def test_bless_one(components, blessing_reqs):
     calculated_result = calculate(components, {}, Algorithm.BLESS_ONE)
