@@ -194,9 +194,6 @@ class Component(aio.Resource):
     Component runs client's loop which manages blessing/ready states based on
     provided monitor client. Initialy, component's ready is disabled.
 
-    Provided client is owned by component instance - closing component
-    will close associated client.
-
     When component's ready is enabled and blessing token matches ready token,
     `run_cb` is called with component instance and additionaly provided `args`
     arguments. While `run_cb` is running, if ready enabled state or
@@ -216,13 +213,14 @@ class Component(aio.Resource):
         self._kwargs = kwargs
         self._ready = False
         self._change_queue = aio.Queue()
+        self._async_group = client.async_group.create_subgroup()
 
         self.async_group.spawn(self._component_loop)
 
     @property
     def async_group(self) -> aio.Group:
         """Async group"""
-        return self._client.async_group
+        return self._async_group
 
     @property
     def client(self) -> Client:
