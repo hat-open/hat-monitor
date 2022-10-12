@@ -40,8 +40,11 @@ class Connection(aio.Resource):
     async def receive(self):
         msg = await self._conn.receive()
         msg_type = msg.data.module, msg.data.type
-        assert msg_type == ('HatMonitor', 'MsgServer')
-        return common.msg_server_from_sbs(msg.data.data)
+        if msg_type == ('HatMonitor', 'MsgServer'):
+            return common.msg_server_from_sbs(msg.data.data)
+        if msg_type == ('HatMonitor', 'MsgClose'):
+            return
+        raise Exception('invalid message type')
 
 
 async def test_create(server_address):
@@ -224,11 +227,11 @@ async def test_global_components(server_address, conn_count):
         with pytest.raises(asyncio.TimeoutError):
             await asyncio.wait_for(conn.receive(), 0.001)
 
-    await server.async_close()
-
     while conns:
         conn, conns = conns[0], conns[1:]
-        await conn.wait_closed()
+        await conn.async_close()
+
+    await server.async_close()
 
 
 async def test_set_rank(server_address):
@@ -323,3 +326,29 @@ async def test_set_rank(server_address):
     assert components == []
 
     await server.async_close()
+
+
+async def test_close_server(server_address):
+    conf = {'address': server_address,
+            'default_rank': 1}
+
+    server = await hat.monitor.server.server.create(conf)
+    conn = await connect(server_address)
+
+    msg = await conn.receive()
+    assert msg.mid == server.mid
+    assert msg.components == server.global_components
+
+    assert conn.is_open
+    assert server.is_open
+
+    server.close()
+
+    msg = await conn.receive()
+    assert msg is None
+
+    assert server.is_closing
+    assert not server.is_closed
+
+    await conn.async_close()
+    await server.wait_closed()

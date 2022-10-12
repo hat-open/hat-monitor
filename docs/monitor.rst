@@ -298,6 +298,8 @@ module (see `Chatter messages`_). These messages are:
     +--------------------+-------+------+-------+-----------+
     | MsgServer          | T     | T    | T     | s |arr| c |
     +--------------------+-------+------+-------+-----------+
+    | MsgClose           | T     | T    | T     | s |arr| c |
+    +--------------------+-------+------+-------+-----------+
 
 where `c` |arr| `s` represents client to server communication and `s` |arr|
 `c` represents server to client communication. When new connection is
@@ -311,6 +313,12 @@ be dependent on receiving initial `MsgClient` and should continue sending
 
 Server always sends last known global state calculated by master monitor
 server (even in case when connection to master is not established).
+
+Client can close connection at any time. If server wishes to terminate
+connection, it should send `MsgClose` message to client. Once client receives
+`MsgClose` it should close connection as soon as possible (with possibility
+of local resource cleanup). If client doesn't close connection after
+configured timeout, server can close connection.
 
 
 Component lifetime

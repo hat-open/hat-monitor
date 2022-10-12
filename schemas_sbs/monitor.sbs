@@ -13,6 +13,8 @@ MsgServer = Record {
     components:  Array(ComponentInfo)
 }
 
+MsgClose = None
+
 MsgSlave = Record {
     components:  Array(ComponentInfo)
 }

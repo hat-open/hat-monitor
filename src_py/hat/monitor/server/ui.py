@@ -39,11 +39,16 @@ async def create(conf: json.Data,
     ui_path = exit_stack.enter_context(
         importlib.resources.path(__package__, 'ui'))
 
-    srv._srv = await juggler.listen(host=addr.hostname,
-                                    port=addr.port,
-                                    connection_cb=srv._on_connection,
-                                    static_dir=ui_path,
-                                    autoflush_delay=autoflush_delay)
+    try:
+        srv._srv = await juggler.listen(host=addr.hostname,
+                                        port=addr.port,
+                                        connection_cb=srv._on_connection,
+                                        static_dir=ui_path,
+                                        autoflush_delay=autoflush_delay)
+
+    except BaseException:
+        exit_stack.close()
+        raise
 
     srv.async_group.spawn(aio.call_on_cancel, exit_stack.close)
 

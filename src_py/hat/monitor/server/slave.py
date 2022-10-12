@@ -18,10 +18,8 @@ mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
 
 
-async def run(conf: json.Data,
-              server: hat.monitor.server.server.Server,
-              master: hat.monitor.server.master.Master):
-    """Run slave/master loop
+class Runner(aio.Resource):
+    """Slave/master loop runner
 
     Args:
         conf: configuration defined by
@@ -30,52 +28,70 @@ async def run(conf: json.Data,
         master: local master
 
     """
-    conn = None
 
-    async def cleanup():
-        await master.set_server(None)
-        if conn:
-            await conn.async_close()
+    def __init__(self,
+                 conf: json.Data,
+                 server: hat.monitor.server.server.Server,
+                 master: hat.monitor.server.master.Master):
+        self._conf = conf
+        self._server = server
+        self._master = master
+        self._async_group = aio.Group()
 
-    try:
-        if not conf['parents']:
-            mlog.debug('no parents - activating local master')
-            await master.set_server(server)
-            await master.wait_closed()
-            return
+        self.async_group.spawn(self._run_loop)
 
-        while True:
-            if not conn or not conn.is_open:
-                conn = await connect(
-                    addresses=conf['parents'],
-                    connect_timeout=conf['connect_timeout'],
-                    connect_retry_count=conf['connect_retry_count'],
-                    connect_retry_delay=conf['connect_retry_delay'])
+    @property
+    def async_group(self):
+        return self._async_group
 
-            if conn and conn.is_open:
-                mlog.debug('master detected - activating local slave')
-                slave = Slave(server, conn)
-                await slave.wait_closed()
+    async def _run_loop(self):
+        conn = None
 
-            elif conn:
+        async def cleanup():
+            await self._master.set_server(None)
+            if conn:
                 await conn.async_close()
 
-            else:
-                mlog.debug('no master detected - activating local master')
-                await master.set_server(server)
-                conn = await connect(
-                    addresses=conf['parents'],
-                    connect_timeout=conf['connect_timeout'],
-                    connect_retry_count=None,
-                    connect_retry_delay=conf['connect_retry_delay'])
-                await master.set_server(None)
+        try:
+            if not self._conf['parents']:
+                mlog.debug('no parents - activating local master')
+                await self._master.set_server(self._server)
+                await self._master.wait_closed()
+                return
 
-    except Exception as e:
-        mlog.warning('run error: %s', e, exc_info=e)
+            while True:
+                if not conn or not conn.is_open:
+                    conn = await connect(
+                        addresses=self._conf['parents'],
+                        connect_timeout=self._conf['connect_timeout'],
+                        connect_retry_count=self._conf['connect_retry_count'],
+                        connect_retry_delay=self._conf['connect_retry_delay'])
 
-    finally:
-        mlog.debug('stopping run')
-        await aio.uncancellable(cleanup())
+                if conn and conn.is_open:
+                    mlog.debug('master detected - activating local slave')
+                    slave = Slave(self._server, conn)
+                    await slave.wait_closed()
+
+                elif conn:
+                    await conn.async_close()
+
+                else:
+                    mlog.debug('no master detected - activating local master')
+                    await self._master.set_server(self._server)
+                    conn = await connect(
+                        addresses=self._conf['parents'],
+                        connect_timeout=self._conf['connect_timeout'],
+                        connect_retry_count=None,
+                        connect_retry_delay=self._conf['connect_retry_delay'])
+                    await self._master.set_server(None)
+
+        except Exception as e:
+            mlog.warning('run error: %s', e, exc_info=e)
+
+        finally:
+            mlog.debug('stopping run')
+            self.close()
+            await aio.uncancellable(cleanup())
 
 
 async def connect(addresses: str,
@@ -111,9 +127,8 @@ class Slave(aio.Resource):
         self._server = server
         self._conn = conn
         self._components = []
+
         self.async_group.spawn(self._slave_loop)
-        self.async_group.spawn(aio.call_on_done, server.wait_closing(),
-                               self.close)
 
     @property
     def async_group(self) -> aio.Group:
@@ -136,7 +151,9 @@ class Slave(aio.Resource):
                         raise Exception('unsupported message type')
 
                     msg_master = common.msg_master_from_sbs(msg.data.data)
-                    self._server.update(msg_master.mid, msg_master.components)
+                    if self._server.is_open:
+                        self._server.update(msg_master.mid,
+                                            msg_master.components)
 
         except ConnectionError:
             pass

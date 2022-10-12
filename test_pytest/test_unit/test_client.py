@@ -53,6 +53,12 @@ class Connection(aio.Resource):
             type='MsgServer',
             data=common.msg_server_to_sbs(msg_server)))
 
+    def send_close(self):
+        self._conn.send(chatter.Data(
+            module='HatMonitor',
+            type='MsgClose',
+            data=None))
+
     async def receive(self):
         msg = await self._conn.receive()
         msg_type = msg.data.module, msg.data.type
@@ -192,6 +198,50 @@ async def test_client_change(server_address):
 
     await client.async_close()
     await conn.wait_closed()
+    await server.async_close()
+
+
+async def test_client_close(server_address):
+    conf = {'name': 'name',
+            'group': 'group',
+            'monitor_address': server_address,
+            'component_address': None}
+
+    server = await create_server(server_address)
+    client = await hat.monitor.client.connect(conf, None)
+    conn = await server.get_connection()
+
+    msg = await conn.receive()
+    assert msg == common.MsgClient(name=conf['name'],
+                                   group=conf['group'],
+                                   data=conf['component_address'],
+                                   blessing_res=common.BlessingRes(
+                                       token=None, ready=False))
+
+    assert server.is_open
+    assert client.is_open
+    assert conn.is_open
+
+    closing_future = asyncio.Future()
+    closed_future = asyncio.Future()
+
+    async def on_close_request():
+        closing_future.set_result(None)
+        await closed_future
+
+    client.add_close_request_cb(on_close_request)
+
+    assert not closing_future.done()
+
+    conn.send_close()
+    await closing_future
+
+    assert client.is_open
+
+    closed_future.set_result(None)
+    await client.wait_closed()
+    await conn.wait_closed()
+
     await server.async_close()
 
 

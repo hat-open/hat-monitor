@@ -234,7 +234,7 @@ async def test_slave(primary_address):
     await slave.wait_closed()
 
 
-async def test_run(primary_address, secondary_address):
+async def test_runner(primary_address, secondary_address):
     primary_master_conf = {'address': primary_address,
                            'default_algorithm': 'BLESS_ALL',
                            'group_algorithms': {}}
@@ -256,23 +256,19 @@ async def test_run(primary_address, secondary_address):
 
     primary_master = await hat.monitor.server.master.create(
         primary_master_conf)
-    primary_run = asyncio.ensure_future(
-        hat.monitor.server.slave.run(primary_slave_conf, primary_server,
-                                     primary_master))
+    primary_runner = hat.monitor.server.slave.Runner(
+        primary_slave_conf, primary_server, primary_master)
 
     secondary_master = await hat.monitor.server.master.create(
         secondary_master_conf)
-    secondary_run = asyncio.ensure_future(
-        hat.monitor.server.slave.run(secondary_slave_conf, secondary_server,
-                                     secondary_master))
+    secondary_runner = hat.monitor.server.slave.Runner(
+        secondary_slave_conf, secondary_server, secondary_master)
 
     mid = await secondary_server.mid_queue.get()
     assert mid > 0
     assert primary_server.mid == 0
 
-    primary_run.cancel()
-    with pytest.raises(asyncio.CancelledError):
-        await primary_run
+    await primary_runner.async_close()
     await primary_master.async_close()
 
     mid = await secondary_server.mid_queue.get()
@@ -280,23 +276,20 @@ async def test_run(primary_address, secondary_address):
 
     primary_master = await hat.monitor.server.master.create(
         primary_master_conf)
-    primary_run = asyncio.ensure_future(
-        hat.monitor.server.slave.run(primary_slave_conf, primary_server,
-                                     primary_master))
+    primary_runner = hat.monitor.server.slave.Runner(
+        primary_slave_conf, primary_server, primary_master)
 
     mid = await secondary_server.mid_queue.get()
     assert mid > 0
     assert primary_server.mid == 0
 
-    secondary_run.cancel()
-    with pytest.raises(asyncio.CancelledError):
-        await secondary_run
+    await secondary_runner.async_close()
     await secondary_master.async_close()
 
     assert primary_server.mid == 0
 
     await primary_master.async_close()
-    await primary_run
+    await primary_runner.wait_closed()
 
 
 async def test_secondary_components(primary_address, secondary_address):
@@ -320,9 +313,8 @@ async def test_secondary_components(primary_address, secondary_address):
 
     secondary_master = await hat.monitor.server.master.create(
         secondary_master_conf)
-    secondary_run = asyncio.ensure_future(
-        hat.monitor.server.slave.run(secondary_slave_conf, secondary_server,
-                                     secondary_master))
+    secondary_runner = hat.monitor.server.slave.Runner(
+        secondary_slave_conf, secondary_server, secondary_master)
     info = common.ComponentInfo(cid=1,
                                 mid=0,
                                 name='name',
@@ -345,9 +337,8 @@ async def test_secondary_components(primary_address, secondary_address):
     primary_server = Server()
     primary_master = await hat.monitor.server.master.create(
         primary_master_conf)
-    primary_run = asyncio.ensure_future(
-        hat.monitor.server.slave.run(primary_slave_conf, primary_server,
-                                     primary_master))
+    primary_runner = hat.monitor.server.slave.Runner(
+        primary_slave_conf, primary_server, primary_master)
 
     mid = await secondary_server.mid_queue.get()
     assert mid == 1
@@ -356,9 +347,7 @@ async def test_secondary_components(primary_address, secondary_address):
     l_comps = await secondary_server.local_components_queue.get_until_empty()
     assert l_comps == g_comps
 
-    primary_run.cancel()
-    with pytest.raises(asyncio.CancelledError):
-        await primary_run
+    await primary_runner.async_close()
     await primary_master.async_close()
     await primary_server.async_close()
 
@@ -369,8 +358,6 @@ async def test_secondary_components(primary_address, secondary_address):
     l_comps = await secondary_server.local_components_queue.get_until_empty()
     assert l_comps == g_comps
 
-    secondary_run.cancel()
-    with pytest.raises(asyncio.CancelledError):
-        await secondary_run
+    await secondary_runner.async_close()
     await secondary_master.async_close()
     await secondary_server.async_close()

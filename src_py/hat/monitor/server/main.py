@@ -70,32 +70,46 @@ def sync_main(conf: json.Data):
 async def async_main(conf: json.Data):
     """Async main entry point"""
     async_group = aio.Group()
-    async_group.spawn(aio.call_on_cancel, asyncio.sleep, 0.1)
+    server = None
+    master = None
+    ui = None
+    slave_runner = None
+
+    async def cleanup():
+        if ui:
+            await ui.async_close()
+        if server:
+            await server.async_close()
+        if slave_runner:
+            await slave_runner.async_close()
+        if master:
+            await master.async_close()
+        await async_group.async_close()
+        await asyncio.sleep(0.1)
 
     try:
         mlog.debug('starting server')
         server = await hat.monitor.server.server.create(conf['server'])
-        async_group.spawn(aio.call_on_cancel, server.async_close)
+        async_group.spawn(aio.call_on_done, server.wait_closing(),
+                          async_group.close)
 
         mlog.debug('starting master')
         master = await hat.monitor.server.master.create(conf['master'])
-        async_group.spawn(aio.call_on_cancel, master.async_close)
+        async_group.spawn(aio.call_on_done, master.wait_closing(),
+                          async_group.close)
 
         mlog.debug('starting ui')
         ui = await hat.monitor.server.ui.create(conf['ui'], server)
-        async_group.spawn(aio.call_on_cancel, ui.async_close)
+        async_group.spawn(aio.call_on_done, ui.wait_closing(),
+                          async_group.close)
 
-        mlog.debug('starting slave')
-        slave_future = async_group.spawn(hat.monitor.server.slave.run,
-                                         conf['slave'], server, master)
+        mlog.debug('starting slave runner')
+        slave_runner = hat.monitor.server.slave.Runner(conf['slave'], server,
+                                                       master)
+        async_group.spawn(aio.call_on_done, slave_runner.wait_closing(),
+                          async_group.close)
 
         mlog.debug('monitor started')
-        for f in [server.wait_closing(),
-                  master.wait_closing(),
-                  ui.wait_closing(),
-                  slave_future]:
-            async_group.spawn(aio.call_on_done, f, async_group.close)
-
         await async_group.wait_closing()
 
     except Exception as e:
@@ -103,7 +117,7 @@ async def async_main(conf: json.Data):
 
     finally:
         mlog.debug('stopping monitor')
-        await aio.uncancellable(async_group.async_close())
+        await aio.uncancellable(cleanup())
 
 
 if __name__ == '__main__':

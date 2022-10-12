@@ -53,6 +53,7 @@ Example of high-level interface usage::
 """
 
 import asyncio
+import collections
 import logging
 import typing
 
@@ -94,6 +95,7 @@ async def connect(conf: json.Data,
     client._blessing_res = common.BlessingRes(token=None,
                                               ready=False)
     client._change_cbs = util.CallbackRegistry()
+    client._close_request_cbs = collections.deque()
 
     client._conn = await chatter.connect(common.sbs_repo,
                                          conf['monitor_address'])
@@ -138,6 +140,15 @@ class Client(aio.Resource):
         self._blessing_res = res
         self._send_msg_client()
 
+    def add_close_request_cb(self, cb: aio.AsyncCallable[[], None]):
+        """Add close request callback
+
+        Close request callbacks are called when client receives `MsgClose`.
+        Client closes connection after all callbacks finish execution.
+
+        """
+        self._close_request_cbs.append(cb)
+
     async def _receive_loop(self):
         try:
             self._send_msg_client()
@@ -147,8 +158,15 @@ class Client(aio.Resource):
                 msg_type = msg.data.module, msg.data.type
 
                 if msg_type == ('HatMonitor', 'MsgServer'):
+                    mlog.debug("received MsgServer")
                     msg_server = common.msg_server_from_sbs(msg.data.data)
                     self._process_msg_server(msg_server)
+
+                elif msg_type == ('HatMonitor', 'MsgClose'):
+                    mlog.debug("received MsgClose")
+                    for cb in self._close_request_cbs:
+                        await aio.call(cb)
+                    break
 
                 else:
                     raise Exception('unsupported message type')
@@ -160,6 +178,7 @@ class Client(aio.Resource):
             mlog.warning("monitor client error: %s", e, exc_info=e)
 
         finally:
+            mlog.debug("stopping receive loop")
             self.close()
 
     def _send_msg_client(self):

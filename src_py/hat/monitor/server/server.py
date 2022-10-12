@@ -1,5 +1,6 @@
 """Implementation of local monitor server communication"""
 
+import asyncio
 import contextlib
 import itertools
 import logging
@@ -14,6 +15,8 @@ from hat.monitor.server import common
 
 mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
+
+close_timeout: float = 3
 
 
 async def create(conf: json.Data
@@ -37,7 +40,8 @@ async def create(conf: json.Data
     server._srv = await chatter.listen(
         sbs_repo=common.sbs_repo,
         address=conf['address'],
-        connection_cb=server._create_client)
+        connection_cb=server._create_client,
+        bind_connections=False)
 
     mlog.debug('monitor server listens clients on %s', conf['address'])
     return server
@@ -121,8 +125,7 @@ class Server(aio.Resource):
     def _create_client(self, conn):
         cid = next(self._next_cids)
 
-        client = _Client(self, conn, cid)
-        self.async_group.spawn(client.client_loop)
+        _Client(self, conn, cid)
 
         info = common.ComponentInfo(
             cid=cid,
@@ -163,7 +166,7 @@ class Server(aio.Resource):
         self._change_cbs.notify()
 
 
-class _Client:
+class _Client(aio.Resource):
 
     def __init__(self, server, conn, cid):
         self._server = server
@@ -171,8 +174,29 @@ class _Client:
         self._cid = cid
         self._mid = server.mid
         self._global_components = server.global_components
+        self._async_group = server.async_group.create_subgroup()
 
-    async def client_loop(self):
+        self.async_group.spawn(self._client_loop)
+
+    @property
+    def async_group(self):
+        return self._async_group
+
+    async def _cleanup(self):
+        self.close()
+
+        with contextlib.suppress(Exception):
+            self._conn.send(chatter.Data(module='HatMonitor',
+                                         type='MsgClose',
+                                         data=None))
+            await asyncio.wait_for(self._conn.wait_closed(),
+                                   timeout=close_timeout)
+
+        self._conn.close()
+        self._server._remove_client(self._cid)
+        await self._conn.async_close()
+
+    async def _client_loop(self):
         try:
             mlog.debug('connection %s established', self._cid)
 
@@ -199,9 +223,8 @@ class _Client:
             mlog.warning('connection loop error: %s', e, exc_info=e)
 
         finally:
-            self._conn.close()
-            self._server._remove_client(self._cid)
-            mlog.debug('connection %s closed', self._cid)
+            mlog.debug('closing connection %s', self._cid)
+            await aio.uncancellable(self._cleanup())
 
     def _on_change(self):
         if (self._mid == self._server.mid and
