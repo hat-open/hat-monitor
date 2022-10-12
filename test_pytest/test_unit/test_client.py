@@ -550,7 +550,11 @@ async def test_component_ready(server_address):
     component.set_ready(True)
 
     msg = await conn.receive()
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=True)
+
+    msg = await conn.receive()
     assert msg.blessing_res == common.BlessingRes(token=123, ready=True)
+
     running = await running_queue.get()
     assert running is True
     assert running_queue.empty()
@@ -567,10 +571,14 @@ async def test_component_ready(server_address):
     component.set_ready(False)
 
     msg = await conn.receive()
-    assert msg.blessing_res == common.BlessingRes(token=None, ready=False)
+    assert msg.blessing_res == common.BlessingRes(token=123, ready=False)
+
     running = await running_queue.get()
     assert running is False
     assert running_queue.empty()
+
+    msg = await conn.receive()
+    assert msg.blessing_res == common.BlessingRes(token=None, ready=False)
 
     msg = common.MsgServer(cid=1, mid=2, components=[info._replace(
                                blessing_req=common.BlessingReq(

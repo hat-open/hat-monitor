@@ -54,6 +54,7 @@ Example of high-level interface usage::
 
 import asyncio
 import collections
+import contextlib
 import logging
 import typing
 
@@ -230,10 +231,12 @@ class Component(aio.Resource):
         self._run_cb = run_cb
         self._args = args
         self._kwargs = kwargs
-        self._ready = False
+        self._blessing_res = common.BlessingRes(token=None,
+                                                ready=False)
         self._change_queue = aio.Queue()
         self._async_group = client.async_group.create_subgroup()
 
+        client.add_close_request_cb(self.async_close)
         self.async_group.spawn(self._component_loop)
 
     @property
@@ -249,15 +252,21 @@ class Component(aio.Resource):
     @property
     def ready(self) -> bool:
         """Ready"""
-        return self._ready
+        return self._blessing_res._ready
 
     def set_ready(self, ready: bool):
         """Set ready"""
-        if self._ready == ready:
+        if self._blessing_res.ready == ready:
             return
 
-        self._ready = ready
-        self._change_queue.put_nowait(None)
+        self._change_blessing_res(ready=ready)
+
+    def _change_blessing_res(self, **kwargs):
+        self._blessing_res = self._blessing_res._replace(**kwargs)
+        self._client.set_blessing_res(self._blessing_res)
+
+        with contextlib.suppress(aio.QueueClosedError):
+            self._change_queue.put_nowait(None)
 
     def _on_client_change(self):
         self._change_queue.put_nowait(None)
@@ -265,23 +274,32 @@ class Component(aio.Resource):
     async def _component_loop(self):
         try:
             with self._client.register_change_cb(self._on_client_change):
+                self._change_blessing_res()
+
                 while True:
                     mlog.debug("waiting blessing and ready")
-                    await self._wait_until_blessed_and_ready()
+                    token = await self._get_blessed_and_ready_token()
+                    self._change_blessing_res(token=token)
 
-                    async with self.async_group.create_subgroup() as subgroup:
-                        mlog.debug("running component's run_cb")
+                    try:
+                        async with self.async_group.create_subgroup() as subgroup:  # NOQA
+                            mlog.debug("running component's run_cb")
 
-                        run_future = subgroup.spawn(
-                            self._run_cb, self, *self._args, **self._kwargs)
-                        ready_future = subgroup.spawn(
-                            self._wait_while_blessed_and_ready)
+                            run_future = subgroup.spawn(
+                                self._run_cb, self, *self._args,
+                                **self._kwargs)
+                            ready_future = subgroup.spawn(
+                                self._wait_while_blessed_and_ready)
 
-                        await asyncio.wait([run_future, ready_future],
-                                           return_when=asyncio.FIRST_COMPLETED)
+                            await asyncio.wait(
+                                [run_future, ready_future],
+                                return_when=asyncio.FIRST_COMPLETED)
 
-                        if run_future.done():
-                            return
+                            if run_future.done():
+                                return
+
+                    finally:
+                        self._change_blessing_res(token=None)
 
         except ConnectionError:
             raise
@@ -292,28 +310,26 @@ class Component(aio.Resource):
         finally:
             self.close()
 
-    async def _wait_until_blessed_and_ready(self):
+    async def _get_blessed_and_ready_token(self):
         while True:
-            info = self._client.info
-            token = info.blessing_req.token if info and self._ready else None
-            blessing_res = common.BlessingRes(token=token,
-                                              ready=self._ready)
+            if self._blessing_res.ready:
+                info = self._client.info
+                token = info.blessing_req.token if info else None
 
-            self._client.set_blessing_res(blessing_res)
-            if token is not None:
-                break
+                if token is not None:
+                    return token
 
             await self._change_queue.get_until_empty()
 
     async def _wait_while_blessed_and_ready(self):
         while True:
-            info = self._client.info
-            token = info.blessing_req.token if info and self._ready else None
-            blessing_res = common.BlessingRes(token=token,
-                                              ready=self._ready)
+            if not self._blessing_res.ready:
+                return
 
-            if token is None:
-                self._client.set_blessing_res(blessing_res)
-                break
+            info = self._client.info
+            token = info.blessing_req.token if info else None
+
+            if token is None or token != self._blessing_res.token:
+                return
 
             await self._change_queue.get_until_empty()
