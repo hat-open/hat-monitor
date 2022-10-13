@@ -302,7 +302,7 @@ class Component(aio.Resource):
                         self._change_blessing_res(token=None)
 
         except ConnectionError:
-            raise
+            pass
 
         except Exception as e:
             mlog.warning("component loop error: %s", e, exc_info=e)
