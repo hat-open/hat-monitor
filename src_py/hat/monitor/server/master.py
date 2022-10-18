@@ -89,7 +89,8 @@ class Master(aio.Resource):
 
     def _on_connection(self, conn):
         try:
-            self._active_subgroup.spawn(self._slave_loop, conn)
+            self._active_subgroup.spawn(self._slave_loop, conn,
+                                        self._active_subgroup)
 
         except Exception:
             conn.close()
@@ -125,7 +126,7 @@ class Master(aio.Resource):
             self._change_cbs.notify(self._components)
             mlog.debug('master deactivated')
 
-    async def _slave_loop(self, conn):
+    async def _slave_loop(self, conn, subgroup):
         mid = next(self._next_mids)
         self._mid_components[mid] = []
 
@@ -133,11 +134,12 @@ class Master(aio.Resource):
             msg = common.MsgMaster(mid=mid,
                                    components=components)
 
-            with contextlib.suppress(ConnectionError):
-                conn.send(chatter.Data(
-                    module='HatMonitor',
-                    type='MsgMaster',
-                    data=common.msg_master_to_sbs(msg)))
+            if subgroup.is_open:
+                with contextlib.suppress(ConnectionError):
+                    conn.send(chatter.Data(
+                        module='HatMonitor',
+                        type='MsgMaster',
+                        data=common.msg_master_to_sbs(msg)))
 
         try:
             mlog.debug('connection %s established', mid)

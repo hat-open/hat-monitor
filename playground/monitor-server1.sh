@@ -3,7 +3,7 @@
 . $(dirname -- "$0")/env.sh
 
 LOG_LEVEL=DEBUG
-CONF_PATH=$DATA_PATH/monitor.yaml
+CONF_PATH=$DATA_PATH/monitor1.yaml
 
 cat > $CONF_PATH << EOF
 type: monitor

@@ -16,9 +16,9 @@ def main():
         aio.run_asyncio(async_main())
 
 async def async_main():
-    conf ={'name': 'name',
+    conf ={'name': 'name2',
            'group': 'group',
-           'monitor_address': 'tcp+sbs://127.0.0.1:23010'}
+           'monitor_address': 'tcp+sbs://127.0.0.1:24010'}
     data = {'abcabcabc1': 'abcabcabc1',
             'abcabcabc2': 'abcabcabc2',
             'abcabcabc3': 'abcabcabc3'}
