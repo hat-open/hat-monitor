@@ -452,32 +452,26 @@ web frontend exchanging communication messages based on juggler communication
 protocol.
 
 
-Backend to frontend communication
-'''''''''''''''''''''''''''''''''
+Server state
+''''''''''''
 
 Backend provides to frontends all information that is made available by server
-to clients. When this information changes, all frontends are notified of
-this change. Current state of `mid` and all components is set and continuously
-updated as part of server's juggler local data.
+to clients. This information is provided as continuously updated server state.
 
-After new Juggler connection is established, backend will immediately set
-juggler local data defined by JSON schema
-``hat-monitor://juggler.yaml#/definitions/data/server``.
-
-Server doesn't send additional `MESSAGE` juggler messages.
+State structure is defined by JSON schema
+``hat-monitor://juggler.yaml#/definitions/state``.
 
 
-Frontend to backend communication
-'''''''''''''''''''''''''''''''''
+Request/response
+''''''''''''''''
 
-This communication is used primary for enabling user control of components'
-ranks. At any time, frontend can send `set_rank` message to backend requesting
-change of rank for any available local component. This massage is
-transmitted as juggler's `MESSAGE` messages defined by JSON schema
-``hat-monitor://juggler.yaml#/definitions/messages/client/set_rank``.
+Juggler request/response communication is used primary for enabling user
+control of components' ranks.
 
-Client's juggler local data isn't changed during communication with server (it
-remains `null`).
+Request data structures are defined by JSON schema
+``hat-monitor://juggler.yaml#/definitions/request``.
+
+In case of successful request execution, response data is ``null``.
 
 
 Future features
@@ -496,7 +490,7 @@ Implementation
 
 Documentation is available as part of generated API reference:
 
-    * `Python hat.monitor module <py_api/hat/monitor.html>`_
+    * `Python hat.monitor module <py_api/index.html>`_
 
 
 Chatter messages
@@ -506,8 +500,8 @@ Chatter messages
     :language: none
 
 
-Juggler messages and data
--------------------------
+Juggler definitions
+-------------------
 
 .. literalinclude:: ../schemas_json/juggler.yaml
     :language: yaml

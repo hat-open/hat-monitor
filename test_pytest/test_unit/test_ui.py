@@ -1,3 +1,5 @@
+import functools
+
 import pytest
 
 from hat import aio
@@ -38,18 +40,18 @@ infos = [
 
 
 @pytest.fixture
-def ui_port():
+def patch_autoflush_delay(monkeypatch):
+    monkeypatch.setattr(hat.monitor.server.ui, 'autoflush_delay', 0)
+
+
+@pytest.fixture
+def port():
     return util.get_unused_tcp_port()
 
 
 @pytest.fixture
-def ui_address(ui_port):
-    return f'http://127.0.0.1:{ui_port}'
-
-
-@pytest.fixture
-def conf(ui_address):
-    return {'address': ui_address}
+def conf(port):
+    return {'address': f'http://127.0.0.1:{port}'}
 
 
 @pytest.fixture
@@ -58,16 +60,8 @@ def ui_juggler_address(ui_address):
 
 
 @pytest.fixture
-def patch_autoflush_delay(monkeypatch):
-    monkeypatch.setattr(hat.monitor.server.ui, 'autoflush_delay', 0)
-
-
-async def connect(address):
-    conn = await juggler.connect(address, autoflush_delay=0)
-    conn.change_queue = aio.Queue()
-    conn.register_change_cb(
-        lambda: conn.change_queue.put_nowait(conn.remote_data))
-    return conn
+async def connect(port):
+    return functools.partial(juggler.connect, f'ws://127.0.0.1:{port}/ws')
 
 
 class Server(aio.Resource):
@@ -117,16 +111,18 @@ class Server(aio.Resource):
         self._change_cbs.notify()
 
 
-async def test_connect(patch_autoflush_delay, conf, ui_juggler_address):
+async def test_connect(patch_autoflush_delay, conf, connect):
     server = Server()
     ui = await hat.monitor.server.ui.create(conf, server)
 
-    conn = await connect(ui_juggler_address)
+    conn = await connect()
+    change_queue = aio.Queue()
+    conn.state.register_change_cb(change_queue.put_nowait)
 
     assert ui.is_open
     assert conn.is_open
 
-    state = await conn.change_queue.get()
+    state = await change_queue.get()
     assert state == {'mid': server.mid,
                      'local_components': [],
                      'global_components': []}
@@ -136,23 +132,28 @@ async def test_connect(patch_autoflush_delay, conf, ui_juggler_address):
 
 
 @pytest.mark.parametrize("conn_count", [1, 2, 5])
-async def test_local_components(patch_autoflush_delay, conf,
-                                ui_juggler_address, conn_count):
+async def test_local_components(patch_autoflush_delay, conf, connect,
+                                conn_count):
     server = Server()
     ui = await hat.monitor.server.ui.create(conf, server)
 
     conns = []
+    change_queues = []
     for _ in range(conn_count):
-        conn = await connect(ui_juggler_address)
+        conn = await connect()
         conns.append(conn)
 
-        state = await conn.change_queue.get()
+        change_queue = aio.Queue()
+        conn.state.register_change_cb(change_queue.put_nowait)
+        change_queues.append(change_queue)
+
+        state = await change_queue.get()
         assert state['local_components'] == []
 
     server.set_local_components(infos)
 
-    for conn in conns:
-        state = await conn.change_queue.get()
+    for change_queue in change_queues:
+        state = await change_queue.get()
         assert state['local_components'] == [{'cid': info.cid,
                                               'name': info.name,
                                               'group': info.group,
@@ -162,8 +163,8 @@ async def test_local_components(patch_autoflush_delay, conf,
 
     server.set_local_components([])
 
-    for conn in conns:
-        state = await conn.change_queue.get()
+    for change_queue in change_queues:
+        state = await change_queue.get()
         assert state['local_components'] == []
 
     while conns:
@@ -174,23 +175,28 @@ async def test_local_components(patch_autoflush_delay, conf,
 
 
 @pytest.mark.parametrize("conn_count", [1, 2, 5])
-async def test_global_components(patch_autoflush_delay, conf,
-                                 ui_juggler_address, conn_count):
+async def test_global_components(patch_autoflush_delay, conf, connect,
+                                 conn_count):
     server = Server()
     ui = await hat.monitor.server.ui.create(conf, server)
 
     conns = []
+    change_queues = []
     for _ in range(conn_count):
-        conn = await connect(ui_juggler_address)
+        conn = await connect()
         conns.append(conn)
 
-        state = await conn.change_queue.get()
+        change_queue = aio.Queue()
+        conn.state.register_change_cb(change_queue.put_nowait)
+        change_queues.append(change_queue)
+
+        state = await change_queue.get()
         assert state['global_components'] == []
 
     server.set_global_components(infos)
 
-    for conn in conns:
-        state = await conn.change_queue.get()
+    for change_queue in change_queues:
+        state = await change_queue.get()
         assert state['global_components'] == [
             {'cid': info.cid,
              'mid': info.mid,
@@ -206,8 +212,8 @@ async def test_global_components(patch_autoflush_delay, conf,
 
     server.set_global_components([])
 
-    for conn in conns:
-        state = await conn.change_queue.get()
+    for change_queue in change_queues:
+        state = await change_queue.get()
         assert state['global_components'] == []
 
     while conns:
@@ -217,17 +223,16 @@ async def test_global_components(patch_autoflush_delay, conf,
     await ui.async_close()
 
 
-async def test_set_rank(patch_autoflush_delay, conf, ui_juggler_address):
+async def test_set_rank(patch_autoflush_delay, conf, connect):
     server = Server()
     ui = await hat.monitor.server.ui.create(conf, server)
 
-    conn = await connect(ui_juggler_address)
+    conn = await connect()
 
     assert server.rank_queue.empty()
 
-    await conn.send({'type': 'set_rank',
-                     'payload': {'cid': 123,
-                                 'rank': 321}})
+    await conn.send('set_rank', {'cid': 123,
+                                 'rank': 321})
 
     cid, rank = await server.rank_queue.get()
     assert cid == 123

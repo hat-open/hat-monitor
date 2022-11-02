@@ -6,30 +6,53 @@ import * as juggler from '@hat-open/juggler';
 import '../src_scss/main.scss';
 
 
+type LocalComponent = {
+    cid: number,
+    name: string | null,
+    group: string | null,
+    data: u.JData,
+    rank: number
+};
+
+type GlobalComponent = LocalComponent & {
+    mid: number,
+    blessing_req: {
+        token: number | null,
+        timestamp: number | null
+    },
+    blessing_res: {
+        token: number | null,
+        ready: boolean
+    }
+};
+
+
 const defaultState = {
     remote: null
 };
 
 
-let app = null;
+let app: juggler.Application | null = null;
 
 
 function main() {
     const root = document.body.appendChild(document.createElement('div'));
     r.init(root, defaultState, vt);
-    app = new juggler.Application(null, 'remote');
+    app = new juggler.Application('remote');
 }
 
 
-function setRank(cid, rank) {
-    app.send({type: 'set_rank', payload: {
+async function setRank(cid: number, rank: number) {
+    if (app == null)
+        return;
+    await app.send('set_rank', {
         cid: cid,
         rank: rank
-    }});
+    });
 }
 
 
-function vt() {
+function vt(): u.VNode {
     if (!r.get('remote'))
         return  ['div.monitor'];
     return ['div.monitor',
@@ -39,8 +62,8 @@ function vt() {
 }
 
 
-function localComponentsVt() {
-    const components = r.get('remote', 'local_components');
+function localComponentsVt(): u.VNode {
+    const components = r.get('remote', 'local_components') as LocalComponent[];
     return ['div',
         ['h1', 'Local components'],
         ['table',
@@ -81,14 +104,14 @@ function localComponentsVt() {
                         ['div',
                             ['button', {
                                 on: {
-                                    click: _ => setRank(cid, rank - 1)
+                                    click: () => setRank(cid, rank - 1)
                                 }},
                                 ['span.fa.fa-chevron-left']
                             ],
                             ['div', String(rank)],
                             ['button', {
                                 on: {
-                                    click: _ => setRank(cid, rank + 1)
+                                    click: () => setRank(cid, rank + 1)
                                 }},
                                 ['span.fa.fa-chevron-right']
                             ]
@@ -101,8 +124,8 @@ function localComponentsVt() {
 }
 
 
-function globalComponentsVt() {
-    const components = r.get('remote', 'global_components');
+function globalComponentsVt(): u.VNode {
+    const components = r.get('remote', 'global_components') as GlobalComponent[];
     return ['div',
         ['h1', 'Global components'],
         ['table',
@@ -142,8 +165,8 @@ function globalComponentsVt() {
                     ['th.col-ready', 'Ready']
                 ]
             ],
-            ['tbody', components.map(({cid, mid, name, group, data, rank,
-                                       blessing_req, blessing_res}) => {
+            ['tbody', components.map(({
+                cid, mid, name, group, data, rank, blessing_req, blessing_res}) => {
                 name = name || '';
                 group = group || '';
                 data = JSON.stringify(data);
@@ -169,18 +192,22 @@ function globalComponentsVt() {
                         data
                     ],
                     ['td.col-rank', String(rank)],
-                    ['td.col-token', (blessing_req.token !== null
-                                      ? String(blessing_req.token)
-                                      : '')],
-                    ['td.col-timestamp', (blessing_req.timestamp !== null
-                                          ? formatTs(blessing_req.timestamp)
-                                          : '')],
-                    ['td.col-token', (blessing_res.token !== null
-                                      ? String(blessing_res.token)
-                                      : '')],
-                    ['td.col-ready', (blessing_res.ready
-                                      ? ['span.fa.fa-check']
-                                      : ['span.fa.fa-times'])]
+                    ['td.col-token', (blessing_req.token != null ?
+                        String(blessing_req.token) :
+                        ''
+                    )],
+                    ['td.col-timestamp', (blessing_req.timestamp != null ?
+                        u.timestampToLocalString(blessing_req.timestamp) :
+                        ''
+                    )],
+                    ['td.col-token', (blessing_res.token != null ?
+                        String(blessing_res.token) :
+                        ''
+                    )],
+                    ['td.col-ready', (blessing_res.ready ?
+                        ['span.fa.fa-check'] :
+                        ['span.fa.fa-times']
+                    )]
                 ];
             })]
         ]
@@ -188,18 +215,6 @@ function globalComponentsVt() {
 }
 
 
-function formatTs(timestamp) {
-    const d = new Date(timestamp * 1000);
-    const z = n => String(n).padStart(2, '0');
-    const zz = n => String(n).padStart(3, '0');
-
-    return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ` +
-        `${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}` +
-        `.${zz(d.getMilliseconds())}`;
-}
-
-
-
 window.addEventListener('load', main);
-window.r = r;
-window.u = u;
+(window as any).r = r;
+(window as any).u = u;
