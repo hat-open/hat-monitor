@@ -1,5 +1,7 @@
 """Common functionality"""
 
+from hat.monitor.common import *  # NOQA
+
 import enum
 import typing
 
@@ -8,7 +10,6 @@ from hat import sbs
 from hat.monitor.common import (ComponentInfo,
                                 component_info_to_sbs,
                                 component_info_from_sbs)
-from hat.monitor.common import *  # NOQA
 
 
 class Algorithm(enum.Enum):
@@ -17,12 +18,12 @@ class Algorithm(enum.Enum):
 
 
 class MsgSlave(typing.NamedTuple):
-    components: typing.List[ComponentInfo]
+    components: list[ComponentInfo]
 
 
 class MsgMaster(typing.NamedTuple):
     mid: int
-    components: typing.List[ComponentInfo]
+    components: list[ComponentInfo]
 
 
 def msg_slave_to_sbs(msg: MsgSlave) -> sbs.Data:

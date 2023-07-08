@@ -8,32 +8,34 @@ from hat import json
 from hat import sbs
 
 
-with importlib.resources.path(__package__, 'json_schema_repo.json') as _path:
+with importlib.resources.as_file(importlib.resources.files(__package__) /
+                                 'json_schema_repo.json') as _path:
     json_schema_repo: json.SchemaRepository = json.SchemaRepository(
         json.json_schema_repo,
         json.SchemaRepository.from_json(_path))
 
-with importlib.resources.path(__package__, 'sbs_repo.json') as _path:
+with importlib.resources.as_file(importlib.resources.files(__package__) /
+                                 'sbs_repo.json') as _path:
     sbs_repo: sbs.Repository = sbs.Repository(
         chatter.sbs_repo,
         sbs.Repository.from_json(_path))
 
 
 class BlessingReq(typing.NamedTuple):
-    token: typing.Optional[int]
-    timestamp: typing.Optional[float]
+    token: int | None
+    timestamp: float | None
 
 
 class BlessingRes(typing.NamedTuple):
-    token: typing.Optional[int]
+    token: int | None
     ready: bool
 
 
 class ComponentInfo(typing.NamedTuple):
     cid: int
     mid: int
-    name: typing.Optional[str]
-    group: typing.Optional[str]
+    name: str | None
+    group: str | None
     data: json.Data
     rank: int
     blessing_req: BlessingReq
@@ -50,7 +52,7 @@ class MsgClient(typing.NamedTuple):
 class MsgServer(typing.NamedTuple):
     cid: int
     mid: int
-    components: typing.List[ComponentInfo]
+    components: list[ComponentInfo]
 
 
 def blessing_req_to_sbs(blessing: BlessingReq) -> sbs.Data:

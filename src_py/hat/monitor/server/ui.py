@@ -36,7 +36,8 @@ async def create(conf: json.Data,
     exit_stack = contextlib.ExitStack()
     try:
         ui_path = exit_stack.enter_context(
-            importlib.resources.path(__package__, 'ui'))
+            importlib.resources.as_file(
+                importlib.resources.files(__package__) / 'ui'))
 
         state = json.Storage()
         update_state = functools.partial(_update_state, state, server)

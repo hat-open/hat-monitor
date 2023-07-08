@@ -2,7 +2,6 @@
 
 import itertools
 import time
-import typing
 
 from hat.monitor.server import common
 
@@ -10,10 +9,10 @@ from hat.monitor.server import common
 _next_tokens = itertools.count(1)
 
 
-def calculate(components: typing.List[common.ComponentInfo],
-              group_algorithms: typing.Dict[str, common.Algorithm],
+def calculate(components: list[common.ComponentInfo],
+              group_algorithms: dict[str, common.Algorithm],
               default_algorithm: common.Algorithm
-              ) -> typing.List[common.ComponentInfo]:
+              ) -> list[common.ComponentInfo]:
     """Calculate blessing
 
     Args:

@@ -10,6 +10,7 @@ from hat import aio
 from hat import chatter
 from hat import json
 from hat import util
+
 from hat.monitor.server import common
 
 
@@ -65,12 +66,12 @@ class Server(aio.Resource):
         return self._mid
 
     @property
-    def local_components(self) -> typing.List[common.ComponentInfo]:
+    def local_components(self) -> list[common.ComponentInfo]:
         """Local components"""
         return self._local_components
 
     @property
-    def global_components(self) -> typing.List[common.ComponentInfo]:
+    def global_components(self) -> list[common.ComponentInfo]:
         """Global components"""
         return self._global_components
 
@@ -87,7 +88,7 @@ class Server(aio.Resource):
 
     def update(self,
                mid: int,
-               global_components: typing.List[common.ComponentInfo]):
+               global_components: list[common.ComponentInfo]):
         """Update server's monitor id and global components"""
         if self._mid == mid and self._global_components == global_components:
             return

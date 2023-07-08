@@ -4,11 +4,11 @@ import asyncio
 import contextlib
 import itertools
 import logging
-import typing
 
 from hat import aio
 from hat import chatter
 from hat import json
+
 from hat.monitor.server import common
 import hat.monitor.server.master
 import hat.monitor.server.server
@@ -96,9 +96,9 @@ class Runner(aio.Resource):
 
 async def connect(addresses: str,
                   connect_timeout: float,
-                  connect_retry_count: typing.Optional[int],
+                  connect_retry_count: int | None,
                   connect_retry_delay: float
-                  ) -> typing.Optional[chatter.Connection]:
+                  ) -> chatter.Connection | None:
     """Establish connection with remote master"""
     counter = (range(connect_retry_count) if connect_retry_count
                else itertools.repeat(None))

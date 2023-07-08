@@ -9,6 +9,7 @@ from hat import aio
 from hat import chatter
 from hat import json
 from hat import util
+
 from hat.monitor.server import blessing
 from hat.monitor.server import common
 import hat.monitor.server.server
@@ -18,7 +19,8 @@ mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
 
 
-ChangeCb = typing.Callable[[typing.List[common.ComponentInfo]], None]
+ChangeCb: typing.TypeAlias = typing.Callable[[list[common.ComponentInfo]],
+                                             None]
 
 
 async def create(conf: json.Data
@@ -59,7 +61,7 @@ class Master(aio.Resource):
         return self._srv.async_group
 
     @property
-    def components(self) -> typing.List[common.ComponentInfo]:
+    def components(self) -> list[common.ComponentInfo]:
         """Global components"""
         return self._components
 

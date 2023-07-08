@@ -62,13 +62,14 @@ from hat import aio
 from hat import chatter
 from hat import json
 from hat import util
+
 from hat.monitor import common
 
 
 mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
 
-RunCb = typing.Callable[..., typing.Awaitable]
+RunCb: typing.TypeAlias = typing.Callable[..., typing.Awaitable]
 """Component run callback coroutine
 
 First argument is component instance and remaining arguments are one provided
@@ -114,12 +115,12 @@ class Client(aio.Resource):
         return self._conn.async_group
 
     @property
-    def info(self) -> typing.Optional[common.ComponentInfo]:
+    def info(self) -> common.ComponentInfo | None:
         """Client's component info"""
         return self._info
 
     @property
-    def components(self) -> typing.List[common.ComponentInfo]:
+    def components(self) -> common.ComponentInfo | None:
         """Global component state"""
         return self._components
 

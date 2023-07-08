@@ -5,6 +5,7 @@ import pytest
 from hat import aio
 from hat import chatter
 from hat import util
+
 from hat.monitor import common
 import hat.monitor.client
 

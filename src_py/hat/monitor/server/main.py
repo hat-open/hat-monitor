@@ -11,6 +11,7 @@ import appdirs
 
 from hat import aio
 from hat import json
+
 from hat.monitor.server import common
 import hat.monitor.server.master
 import hat.monitor.server.server
