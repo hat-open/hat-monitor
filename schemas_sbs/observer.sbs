@@ -1,4 +1,4 @@
-module HatMonitor
+module HatObserver
 
 MsgClient = Record {
     name:         String

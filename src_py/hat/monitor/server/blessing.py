@@ -1,17 +1,23 @@
 """Implementation of blessing calculation algorithms"""
 
+import enum
 import itertools
 import time
 
-from hat.monitor.server import common
+from hat.monitor import common
 
 
 _next_tokens = itertools.count(1)
 
 
+class Algorithm(enum.Enum):
+    BLESS_ALL = 'BLESS_ALL'
+    BLESS_ONE = 'BLESS_ONE'
+
+
 def calculate(components: list[common.ComponentInfo],
-              group_algorithms: dict[str, common.Algorithm],
-              default_algorithm: common.Algorithm
+              group_algorithms: dict[str, Algorithm],
+              default_algorithm: Algorithm
               ) -> list[common.ComponentInfo]:
     """Calculate blessing
 
@@ -39,10 +45,10 @@ def calculate(components: list[common.ComponentInfo],
 
 
 def _calculate_group(algorithm, components):
-    if algorithm == common.Algorithm.BLESS_ALL:
+    if algorithm == Algorithm.BLESS_ALL:
         return _bless_all(components)
 
-    if algorithm == common.Algorithm.BLESS_ONE:
+    if algorithm == Algorithm.BLESS_ONE:
         return _bless_one(components)
 
     raise ValueError('unsupported algorithm')

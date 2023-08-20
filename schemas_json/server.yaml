@@ -1,0 +1,115 @@
+---
+$schema: "http://json-schema.org/schema#"
+id: "hat-monitor://server.yaml#"
+type: object
+required:
+    - type
+    - log
+    - default_algorithm
+    - group_algorithms
+    - server
+    - master
+    - slave
+    - ui
+properties:
+    type:
+        const: monitor
+        description: configuration type identification
+    version:
+        type: string
+        description: component version
+    log:
+        $ref: "hat-json://logging.yaml#"
+    default_algorithm:
+        $ref: "hat-monitor://main.yaml#/definitions/algorithm"
+    group_algorithms:
+        description: |
+            keys represent group names
+        type: object
+        patternProperties:
+            ".+":
+                $ref: "hat-monitor://main.yaml#/definitions/algorithm"
+    server:
+        $ref: "hat-monitor://main.yaml#/definitions/server"
+    master:
+        $ref: "hat-monitor://main.yaml#/definitions/master"
+    slave:
+        $ref: "hat-monitor://main.yaml#/definitions/slave"
+    ui:
+        $ref: "hat-monitor://main.yaml#/definitions/ui"
+definitions:
+    server:
+        title: Listening Orchestrator Server
+        type: object
+        required:
+            - host
+            - port
+            - default_rank
+        properties:
+            host:
+                type: string
+                default: '127.0.0.1'
+            port:
+                type: integer
+                default: 23010
+            default_rank:
+                type: integer
+    master:
+        title: Listening Orchestrator Master
+        type: object
+        required:
+            - host
+            - port
+        properties:
+            host:
+                type: string
+                default: '127.0.0.1'
+            port:
+                type: integer
+                default: 23011
+    slave:
+        type: object
+        required:
+            - parents
+            - connect_timeout
+            - connect_retry_count
+            - connect_retry_delay
+        properties:
+            parents:
+                title: parent addresses
+                type: array
+                items:
+                    type: object
+                    required:
+                        - host
+                        - port
+                    properties:
+                        host:
+                            type: string
+                        port:
+                            type: integer
+                            default: 23011
+            connect_timeout:
+                type: number
+            connect_retry_count:
+                type: integer
+            connect_retry_delay:
+                type: number
+    ui:
+        title: Listening UI Web Server
+        type: object
+        required:
+            - host
+            - port
+        properties:
+            host:
+                type: string
+                default: '127.0.0.1'
+            port:
+                type: integer
+                default: 23022
+    algorithm:
+        enum:
+            - BLESS_ALL
+            - BLESS_ONE
+...
