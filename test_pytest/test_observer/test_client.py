@@ -123,12 +123,20 @@ async def test_msg_close(addr):
     srv_conn_queue = aio.Queue()
     srv = await chatter.listen(srv_conn_queue.put_nowait, addr)
 
+    close_queue = aio.Queue()
     conn = await client.connect(addr,
                                 name='name',
-                                group='group')
+                                group='group',
+                                close_req_cb=close_queue.put_nowait)
     srv_conn = await srv_conn_queue.get()
+
+    assert close_queue.empty()
 
     await common.send_msg(srv_conn, 'HatObserver.MsgClose', None)
 
+    await close_queue.get()
+
     await conn.wait_closed()
     await srv.async_close()
+
+    assert close_queue.empty()

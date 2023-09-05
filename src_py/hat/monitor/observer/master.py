@@ -9,15 +9,15 @@ from hat import aio
 from hat.drivers import chatter
 from hat.drivers import tcp
 
-from hat.monitor.server import common
+from hat.monitor.observer import common
 
 
 mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
 
-ComponentCb: typing.TypeAlias = aio.AsyncCallable[['Master',
-                                                   list[common.ComponentInfo]],
-                                                  None]
+ComponentsCb: typing.TypeAlias = aio.AsyncCallable[['Master',
+                                                    list[common.ComponentInfo]],  # NOQA
+                                                   None]
 """Components callback"""
 
 BlessingCb: typing.TypeAlias = typing.Callable[['Master',
@@ -29,7 +29,7 @@ BlessingCb: typing.TypeAlias = typing.Callable[['Master',
 async def listen(addr: tcp.Address,
                  *,
                  local_components: list[common.ComponentInfo] = [],
-                 global_components_cb: common.ComponentsCb | None = None,
+                 global_components_cb: ComponentsCb | None = None,
                  blessing_cb: BlessingCb | None = None,
                  **kwargs
                  ) -> 'Master':

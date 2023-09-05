@@ -143,5 +143,81 @@ async def test_msg_server(addr):
     assert len(srv.state.local_components) == 1
     assert srv.state.global_components == [info]
 
+    await srv.set_rank(cid, -42)
+
+    assert srv.state.local_components[0].rank == -42
+
+    await conn.async_close()
+    await srv.async_close()
+
+
+async def test_msg_close(addr):
+    srv = await server.listen(addr)
+    conn = await chatter.connect(addr)
+
+    msg_type, _ = await common.receive_msg(conn)
+    assert msg_type == 'HatObserver.MsgServer'
+
+    assert srv.is_open
+    assert conn.is_open
+
+    srv.close()
+
+    msg_type, _ = await common.receive_msg(conn)
+    assert msg_type == 'HatObserver.MsgClose'
+
+    assert srv.is_closing
+    assert not srv.is_closed
+    assert conn.is_open
+
+    await conn.async_close()
+    await srv.wait_closed()
+
+
+async def test_rank_cache(addr):
+    srv = await server.listen(addr, default_rank=123)
+    conn = await chatter.connect(addr)
+
+    msg_type, _ = await common.receive_msg(conn)
+    assert msg_type == 'HatObserver.MsgServer'
+
+    assert srv.state.local_components[0].rank == 123
+
+    await common.send_msg(conn, 'HatObserver.MsgClient', {
+        'name': 'name',
+        'group': 'group',
+        'data': 'null',
+        'blessingRes': {'token': ('none', None),
+                        'ready': False}})
+
+    msg_type, _ = await common.receive_msg(conn)
+    assert msg_type == 'HatObserver.MsgServer'
+
+    assert srv.state.local_components[0].rank == 123
+
+    await srv.set_rank(srv.state.local_components[0].cid, 321)
+
+    assert srv.state.local_components[0].rank == 321
+
+    await conn.async_close()
+    conn = await chatter.connect(addr)
+
+    msg_type, _ = await common.receive_msg(conn)
+    assert msg_type == 'HatObserver.MsgServer'
+
+    assert srv.state.local_components[0].rank == 123
+
+    await common.send_msg(conn, 'HatObserver.MsgClient', {
+        'name': 'name',
+        'group': 'group',
+        'data': 'null',
+        'blessingRes': {'token': ('none', None),
+                        'ready': False}})
+
+    msg_type, _ = await common.receive_msg(conn)
+    assert msg_type == 'HatObserver.MsgServer'
+
+    assert srv.state.local_components[0].rank == 321
+
     await conn.async_close()
     await srv.async_close()
