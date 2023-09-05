@@ -6,11 +6,12 @@ import logging
 import typing
 
 from hat import aio
+from hat import json
 from hat import util
 from hat.drivers import chatter
 from hat.drivers import tcp
 
-from hat.monitor.server import common
+from hat.monitor.observer import common
 
 
 mlog: logging.Logger = logging.getLogger(__name__)
@@ -132,7 +133,7 @@ class Server(aio.Resource):
                         cid=cid,
                         name=msg_data['name'],
                         group=msg_data['group'],
-                        data=msg_data['data'],
+                        data=json.decode(msg_data['data']),
                         blessing_res=common.blessing_res_from_sbs(
                             msg_data['blessingRes']))
 
