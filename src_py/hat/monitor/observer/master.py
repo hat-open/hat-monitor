@@ -97,7 +97,7 @@ class Master(aio.Resource):
             conn.close()
 
     async def _slave_loop(self, conn):
-        mid = next(self._next_cids)
+        mid = next(self._next_mids)
 
         mlog.debug('starting slave loop (mid: %s)', mid)
         try:
@@ -145,20 +145,20 @@ class Master(aio.Resource):
 
         else:
             blessing_reqs = {i.cid: i.blessing_req
-                             for i in self._mid_components.get(components, [])}
+                             for i in self._mid_components.get(mid, [])}
             components = [
                 i._replace(mid=mid,
                            blessing_req=blessing_reqs.get(i.cid,
                                                           i.blessing_req))
                 for i in components]
 
-            if self._mid_components.get(components) == components:
+            if self._mid_components.get(mid) == components:
                 return
 
             self._mid_components[mid] = components
 
         global_components = list(_get_global_components(self._mid_components))
-        self._global_components = (self._blessing_cb(global_components)
+        self._global_components = (self._blessing_cb(self, global_components)
                                    if self._blessing_cb else global_components)
 
         if self._global_components_cb:
