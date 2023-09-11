@@ -74,7 +74,7 @@ class Client(aio.Resource):
         self._conn = conn
         self._name = name
         self._group = group
-        self._data = data
+        self._data = json.encode(data)
         self._state_cb = state_cb
         self._close_req_cb = close_req_cb
         self._state = State(info=None,
@@ -141,7 +141,7 @@ class Client(aio.Resource):
         await common.send_msg(self._conn, 'HatObserver.MsgClient', {
             'name': self._name,
             'group': self._group,
-            'data': json.encode(self._data),
+            'data': self._data,
             'blessingRes': common.blessing_res_to_sbs(blessing_res)})
 
     async def _process_msg_server(self, cid, mid, components):
@@ -149,7 +149,7 @@ class Client(aio.Resource):
                                                  i.mid == mid))
         state = State(info=info,
                       components=components)
-        if (self._state == state):
+        if self._state == state:
             return
 
         self._state = state

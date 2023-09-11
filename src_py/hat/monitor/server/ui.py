@@ -48,7 +48,7 @@ async def create(host: str,
                                            static_dir=ui_path,
                                            autoflush_delay=autoflush_delay,
                                            shutdown_timeout=shutdown_timeout,
-                                           state=state)
+                                           state=server._state)
 
         try:
             server.async_group.spawn(aio.call_on_cancel, exit_stack.close)

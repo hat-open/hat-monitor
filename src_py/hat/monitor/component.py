@@ -103,7 +103,7 @@ class Component(aio.Resource):
     @property
     def ready(self) -> bool:
         """Ready"""
-        return self._blessing_res._ready
+        return self._blessing_res.ready
 
     async def set_ready(self, ready: bool):
         """Set ready"""
@@ -142,7 +142,13 @@ class Component(aio.Resource):
             while True:
                 mlog.debug("waiting blessing and ready")
                 token = await self._get_blessed_and_ready_token()
-                await self._change_blessing_res(token=token)
+
+                if self._blessing_res.token != token:
+                    await self._change_blessing_res(token=token)
+
+                ready = await self._wait_blessed_and_ready_token()
+                if not ready:
+                    continue
 
                 try:
                     async with self.async_group.create_subgroup() as subgroup:
@@ -159,7 +165,7 @@ class Component(aio.Resource):
                             return
 
                 finally:
-                    self._change_blessing_res(token=None)
+                    await self._change_blessing_res(token=None)
 
         except ConnectionError:
             pass
@@ -168,17 +174,34 @@ class Component(aio.Resource):
             mlog.warning("component loop error: %s", e, exc_info=e)
 
         finally:
+            mlog.debug("stopping component loop")
             self.close()
             self._change_queue.close()
 
     async def _get_blessed_and_ready_token(self):
         while True:
             if self._blessing_res.ready:
-                info = self._client.info
+                info = self._client.state.info
                 token = info.blessing_req.token if info else None
 
                 if token is not None:
                     return token
+
+            await self._change_queue.get_until_empty()
+
+    async def _wait_blessed_and_ready_token(self):
+        while True:
+            if not self._blessing_res.ready:
+                return False
+
+            if self._blessing_res.token is None:
+                return False
+
+            info = self._client.state.info
+            token = info.blessing_res.token if info else None
+
+            if token == self._blessing_res.token:
+                return token == info.blessing_req.token
 
             await self._change_queue.get_until_empty()
 
@@ -187,7 +210,7 @@ class Component(aio.Resource):
             if not self._blessing_res.ready:
                 return
 
-            info = self._client.info
+            info = self._client.state.info
             token = info.blessing_req.token if info else None
 
             if token is None or token != self._blessing_res.token:
