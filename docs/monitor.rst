@@ -30,7 +30,7 @@ By installing Monitor Server from `hat-monitor` package, executable
 
 Additionally, `hat-monitor` package provides implementation of library which
 can be used as basis for communication between components and Monitor Server.
-This library is available in `hat.monitor.client` module.
+This library is available in `hat.monitor.component` module.
 
 
 Communication model
@@ -38,7 +38,7 @@ Communication model
 
 Monitor Server provides n-node redundancy architecture based on
 chatter protocol (structure of communication messages is
-defined in `HatMonitor` package). It is based on server-client communication
+defined in `HatObserver` package). It is based on server-client communication
 between components and monitor server. There also exists horizontal peer
 communication between multiple monitor servers which enables forming of
 single system based on multiple distributed computing nodes. It is assumed
@@ -496,7 +496,7 @@ Documentation is available as part of generated API reference:
 Chatter messages
 ----------------
 
-.. literalinclude:: ../schemas_sbs/monitor.sbs
+.. literalinclude:: ../schemas_sbs/observer.sbs
     :language: none
 
 
@@ -510,7 +510,7 @@ Juggler definitions
 Configuration
 -------------
 
-.. literalinclude:: ../schemas_json/main.yaml
+.. literalinclude:: ../schemas_json/server.yaml
     :language: yaml
 
 

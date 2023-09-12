@@ -93,7 +93,7 @@ class Slave(aio.Resource):
                 if msg_type != 'HatObserver.MsgMaster':
                     raise Exception('unsupported message type')
 
-                mlog.debug('received msg server')
+                mlog.debug('received msg master')
                 components = [common.component_info_from_sbs(i)
                               for i in msg_data['components']]
                 self._state = State(mid=msg_data['mid'],

@@ -109,6 +109,7 @@ class Master(aio.Resource):
             self._mid_conns[mid] = conn
 
             while True:
+                mlog.debug('received msg slave (mid: %s)', mid)
                 components = [common.component_info_from_sbs(i)
                               for i in msg_data['components']]
                 await self._update_components(mid, components)
@@ -161,13 +162,17 @@ class Master(aio.Resource):
         self._global_components = (self._blessing_cb(self, global_components)
                                    if self._blessing_cb else global_components)
 
+        if components is not None:
+            self._mid_components[mid] = [i for i in self._global_components
+                                         if i.mid == mid]
+
         if self._global_components_cb:
             await aio.call(self._global_components_cb, self,
                            self._global_components)
 
         for mid, conn in list(self._mid_conns.items()):
             with contextlib.suppress(ConnectionError):
-                await _send_msg_master(conn, mid, global_components)
+                await _send_msg_master(conn, mid, self._global_components)
 
 
 async def _send_msg_master(conn, mid, global_components):

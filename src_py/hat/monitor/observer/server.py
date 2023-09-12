@@ -127,18 +127,17 @@ class Server(aio.Resource):
             while True:
                 msg_type, msg_data = await common.receive_msg(conn)
 
-                if msg_type == 'HatObserver.MsgClient':
-                    mlog.debug('received msg client (cid: %s)', cid)
-                    await self._update_client(
-                        cid=cid,
-                        name=msg_data['name'],
-                        group=msg_data['group'],
-                        data=json.decode(msg_data['data']),
-                        blessing_res=common.blessing_res_from_sbs(
-                            msg_data['blessingRes']))
-
-                else:
+                if msg_type != 'HatObserver.MsgClient':
                     raise Exception('unsupported message type')
+
+                mlog.debug('received msg client (cid: %s)', cid)
+                await self._update_client(
+                    cid=cid,
+                    name=msg_data['name'],
+                    group=msg_data['group'],
+                    data=json.decode(msg_data['data']),
+                    blessing_res=common.blessing_res_from_sbs(
+                        msg_data['blessingRes']))
 
         except ConnectionError:
             pass

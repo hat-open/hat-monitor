@@ -4,6 +4,7 @@
 
 LOG_LEVEL=DEBUG
 CONF_PATH=$DATA_PATH/monitor2.yaml
+ALGORITHM=BLESS_ONE
 
 cat > $CONF_PATH << EOF
 type: monitor
@@ -24,20 +25,25 @@ log:
         level: INFO
         handlers: ['console_handler']
     disable_existing_loggers: false
+default_algorithm: $ALGORITHM
+group_algorithms: {}
 server:
-    address: "tcp+sbs://127.0.0.1:24010"
+    host: "127.0.0.1"
+    port: 24010
     default_rank: 1
 master:
-    address: "tcp+sbs://127.0.0.1:24011"
-    default_algorithm: BLESS_ALL
-    group_algorithms: {}
+    host: "127.0.0.1"
+    port: 24011
 slave:
-    parents: ["tcp+sbs://127.0.0.1:23011"]
+    parents:
+      - host: "127.0.0.1"
+        port: 23011
     connect_timeout: 5
     connect_retry_count: 3
     connect_retry_delay: 5
 ui:
-    address: "http://127.0.0.1:24022"
+    host: "127.0.0.1"
+    port: 24022
 EOF
 
 exec $PYTHON -m hat.monitor.server \

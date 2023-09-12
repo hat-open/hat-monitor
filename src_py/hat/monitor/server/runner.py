@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import functools
 import itertools
 import logging
 
@@ -20,15 +19,6 @@ mlog: logging.Logger = logging.getLogger(__name__)
 
 
 async def create(conf: json.Data) -> 'Runner':
-    default_algorith = hat.monitor.server.blessing.Algorithm(
-        conf['default_algorithm'])
-    group_algorithms = {k: hat.monitor.server.blessing.Algorithm(v)
-                        for k, v in conf['group_algorithms'].items()}
-    calculate_blessing = functools.partial(
-        hat.monitor.server.blessing.calculate,
-        default_algorith=default_algorith,
-        group_algorithms=group_algorithms)
-
     runner = Runner()
     runner._loop = asyncio.get_running_loop()
     runner._async_group = aio.Group()
@@ -39,6 +29,10 @@ async def create(conf: json.Data) -> 'Runner':
     runner._slave_conf = conf['slave']
     runner._slave_parents = [tcp.Address(i['host'], i['port'])
                              for i in conf['slave']['parents']]
+    runner._default_algorithm = hat.monitor.server.blessing.Algorithm(
+        conf['default_algorithm'])
+    runner._group_algorithms = {k: hat.monitor.server.blessing.Algorithm(v)
+                                for k, v in conf['group_algorithms'].items()}
 
     runner.async_group.spawn(aio.call_on_cancel, runner._on_close)
 
@@ -55,7 +49,7 @@ async def create(conf: json.Data) -> 'Runner':
             tcp.Address(conf['master']['host'], conf['master']['port']),
             local_components=runner._server.state.local_components,
             global_components_cb=runner._on_master_global_components,
-            blessing_cb=calculate_blessing)
+            blessing_cb=runner._calculate_blessing)
         runner._bind_resource(runner._master)
 
         mlog.debug('starting ui')
@@ -95,15 +89,15 @@ class Runner(aio.Resource):
             await self._slave.async_close()
 
     async def _on_server_state(self, server, state):
+        if self._ui:
+            self._ui.set_state(state)
+
         if self._master:
             await self._master.set_local_components(state.local_components)
 
         if self._slave and self._slave.is_open:
             with contextlib.suppress(ConnectionError):
-                self._slave.update(state.state.local_components)
-
-        if self._ui:
-            await self._ui.set_state(state)
+                await self._slave.update(state.local_components)
 
     async def _on_master_global_components(self, master, global_components):
         if self._server and master.is_active:
@@ -114,19 +108,23 @@ class Runner(aio.Resource):
             await self._server.set_rank(cid, rank)
 
     async def _on_slave_state(self, slave, state):
-        if self._server and self._master and not self._master.is_active:
+        if (self._server and
+                self._master and
+                not self._master.is_active and
+                state.mid is not None):
             await self._server.update(state.mid, state.global_components)
 
     async def _runner_loop(self):
         try:
             await self._set_master_active(False)
 
-            if not self._parents:
+            if not self._slave_parents:
                 self._master.set_active(True)
                 await self._loop.create_future()
 
             while True:
                 if not self._slave:
+                    await self._server.update(0, [])
                     await self._create_slave_loop(
                         self._slave_conf['connect_retry_count'])
 
@@ -156,22 +154,35 @@ class Runner(aio.Resource):
         self.async_group.spawn(aio.call_on_done, resource.wait_closing(),
                                self.close)
 
+    def _calculate_blessing(self, master, components):
+        return hat.monitor.server.blessing.calculate(
+            components=components,
+            default_algorithm=self._default_algorithm,
+            group_algorithms=self._group_algorithms)
+
     async def _set_master_active(self, active):
-        self._master.set_active(False)
+        self._master.set_active(active)
         await self._on_server_state(self._server, self._server.state)
+
+        if active:
+            await self._server.update(0, self._master.global_components)
+
+        elif self._slave and self._slave.state.mid is not None:
+            await self._server.update(self._slave.state.mid,
+                                      self._slave.state.global_components)
 
     async def _create_slave_loop(self, retry_count):
         counter = (range(retry_count + 1) if retry_count is not None
                    else itertools.repeat(None))
 
         for count in counter:
-            for addr in self._parents:
+            for addr in self._slave_parents:
                 with contextlib.suppress(Exception):
                     self._slave = await self._create_slave(addr)
                     return
 
             if count is None or count < retry_count:
-                await asyncio.sleep(self._slave_conf['connect_delay'])
+                await asyncio.sleep(self._slave_conf['connect_retry_delay'])
 
     async def _create_slave(self, addr):
         try:

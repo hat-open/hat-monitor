@@ -12,7 +12,7 @@ import appdirs
 from hat import aio
 from hat import json
 
-from hat.monitor.server import common
+from hat.monitor import common
 import hat.monitor.server.runner
 
 

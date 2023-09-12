@@ -40,8 +40,10 @@ def calculate(components: list[common.ComponentInfo],
         for c in _calculate_group(algorithm, components_from_group):
             blessings[c.mid, c.cid] = c.blessing_req
 
-    return [c._replace(blessing_req=blessings[c.mid, c.cid])
-            for c in components]
+    result = [c._replace(blessing_req=blessings[c.mid, c.cid])
+              for c in components]
+
+    return result
 
 
 def _calculate_group(algorithm, components):

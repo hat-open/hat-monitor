@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PYTHON=${PYTHON:-python}
+PYTHON=${PYTHON:-python3}
 RUN_PATH=$(cd $(dirname -- "$0") && pwd)
 ROOT_PATH=$RUN_PATH/..
 DATA_PATH=$RUN_PATH/data

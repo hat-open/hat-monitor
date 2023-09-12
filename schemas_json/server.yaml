@@ -21,22 +21,22 @@ properties:
     log:
         $ref: "hat-json://logging.yaml#"
     default_algorithm:
-        $ref: "hat-monitor://main.yaml#/definitions/algorithm"
+        $ref: "hat-monitor://server.yaml#/definitions/algorithm"
     group_algorithms:
         description: |
             keys represent group names
         type: object
         patternProperties:
             ".+":
-                $ref: "hat-monitor://main.yaml#/definitions/algorithm"
+                $ref: "hat-monitor://server.yaml#/definitions/algorithm"
     server:
-        $ref: "hat-monitor://main.yaml#/definitions/server"
+        $ref: "hat-monitor://server.yaml#/definitions/server"
     master:
-        $ref: "hat-monitor://main.yaml#/definitions/master"
+        $ref: "hat-monitor://server.yaml#/definitions/master"
     slave:
-        $ref: "hat-monitor://main.yaml#/definitions/slave"
+        $ref: "hat-monitor://server.yaml#/definitions/slave"
     ui:
-        $ref: "hat-monitor://main.yaml#/definitions/ui"
+        $ref: "hat-monitor://server.yaml#/definitions/ui"
 definitions:
     server:
         title: Listening Orchestrator Server

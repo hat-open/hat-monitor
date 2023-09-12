@@ -111,7 +111,7 @@ class Client(aio.Resource):
                 msg_type, msg_data = await common.receive_msg(self._conn)
 
                 if msg_type == 'HatObserver.MsgServer':
-                    mlog.debug("received MsgServer")
+                    mlog.debug("received msg server")
                     components = [common.component_info_from_sbs(i)
                                   for i in msg_data['components']]
                     await self._process_msg_server(cid=msg_data['cid'],
@@ -119,7 +119,7 @@ class Client(aio.Resource):
                                                    components=components)
 
                 elif msg_type == 'HatObserver.MsgClose':
-                    mlog.debug("received MsgClose")
+                    mlog.debug("received msg close")
                     if self._close_req_cb:
                         await aio.call(self._close_req_cb, self)
                     break
