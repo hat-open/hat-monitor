@@ -1,6 +1,5 @@
 """Monitor Component"""
 
-import asyncio
 import contextlib
 import logging
 import typing
@@ -19,9 +18,11 @@ mlog: logging.Logger = logging.getLogger(__name__)
 State: typing.TypeAlias = client.State
 """Component state"""
 
-RunCb: typing.TypeAlias = typing.Callable[['Component'],
-                                          typing.Awaitable[None]]
-"""Component run callback coroutine"""
+Runner: typing.TypeAlias = aio.Resource
+"""Component runner"""
+
+RunnerCb: typing.TypeAlias = aio.AsyncCallable[['Component'], Runner]
+"""Runner callback"""
 
 StateCb: typing.TypeAlias = aio.AsyncCallable[['Component', State], None]
 """State callback"""
@@ -33,7 +34,7 @@ CloseReqCb: typing.TypeAlias = aio.AsyncCallable[['Component'], None]
 async def connect(addr: tcp.Address,
                   name: str,
                   group: str,
-                  run_cb: RunCb,
+                  runner_cb: RunnerCb,
                   *,
                   data: json.Data = None,
                   state_cb: StateCb | None = None,
@@ -42,24 +43,28 @@ async def connect(addr: tcp.Address,
                   ) -> 'Component':
     """Connect to local monitor server and create component
 
-    Implementation of component behaviour according to BLESS_ALL and BLESS_ONE
+    Implementation of component behavior according to BLESS_ALL and BLESS_ONE
     algorithms.
 
-    Component runs client's loop which manages blessing/ready states based on
-    provided monitor client. Initialy, component's ready is disabled.
+    Component runs client's loop which manages blessing req/res states based on
+    provided monitor client. Initially, component's ready is disabled.
 
-    When component's ready is enabled and blessing token matches ready token,
-    `run_cb` is called with component instance and additionaly provided `args`
-    arguments. While `run_cb` is running, if ready enabled state or
-    blessing token changes, `run_cb` is canceled.
+    Component is considered active when component's ready is ``True`` and
+    blessing req/res tokens are matching.
 
-    If `run_cb` finishes or raises exception, component is closed.
+    When component becomes active, `component_cb` is called. Result of calling
+    `component_cb` should be runner representing user defined components
+    activity. Once component stops being active, runner is closed. If
+    component becomes active again, `component_cb` call is repeated.
 
-    Additional arguments are passed to `hat.drivers.chatter.connect`.
+    If connection to Monitor Server is closed, component is also closed.
+    If component is closed while active, runner is closed.
+
+    Additional arguments are passed to `hat.monitor.observer.client.connect`.
 
     """
     component = Component()
-    component._run_cb = run_cb
+    component._runner_cb = runner_cb
     component._state_cb = state_cb
     component._close_req_cb = close_req_cb
     component._blessing_res = common.BlessingRes(token=None,
@@ -84,7 +89,7 @@ async def connect(addr: tcp.Address,
 
 
 class Component(aio.Resource):
-    """Monitor component
+    """Monitor Component
 
     For creating new component see `connect` coroutine.
 
@@ -151,18 +156,15 @@ class Component(aio.Resource):
                     continue
 
                 try:
-                    async with self.async_group.create_subgroup() as subgroup:
-                        mlog.debug("running component's run_cb")
+                    mlog.debug("creating component runner")
+                    runner = await aio.call(self._runner_cb, self)
 
-                        run_task = subgroup.spawn(self._run_cb, self)
-                        ready_task = subgroup.spawn(
-                            self._wait_while_blessed_and_ready)
+                    try:
+                        await self._wait_while_blessed_and_ready()
 
-                        await asyncio.wait([run_task, ready_task],
-                                           return_when=asyncio.FIRST_COMPLETED)
-
-                        if run_task.done():
-                            return
+                    finally:
+                        mlog.debug("closing component runner")
+                        await aio.uncancellable(runner.async_close())
 
                 finally:
                     await self._change_blessing_res(token=None)

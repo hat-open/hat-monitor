@@ -18,15 +18,15 @@ def addr():
 
 async def test_connect(addr):
 
-    async def run(c):
-        await asyncio.Future()
+    def create_runner(c):
+        return aio.Group()
 
     with pytest.raises(Exception):
-        await component.connect(addr, 'name', 'group', run)
+        await component.connect(addr, 'name', 'group', create_runner)
 
     srv = await server.listen(addr)
 
-    conn = await component.connect(addr, 'name', 'group', run)
+    conn = await component.connect(addr, 'name', 'group', create_runner)
 
     assert conn.is_open
 
@@ -37,8 +37,8 @@ async def test_connect(addr):
 async def test_close_req(addr):
     close_req_queue = aio.Queue()
 
-    async def run(c):
-        await asyncio.Future()
+    def create_runner(c):
+        return aio.Group()
 
     def on_close_req(c):
         assert c is conn
@@ -46,7 +46,7 @@ async def test_close_req(addr):
 
     srv = await server.listen(addr)
 
-    conn = await component.connect(addr, 'name', 'group', run,
+    conn = await component.connect(addr, 'name', 'group', create_runner,
                                    close_req_cb=on_close_req)
 
     srv.close()
@@ -60,15 +60,15 @@ async def test_close_req(addr):
 async def test_ready(addr):
     srv_state_queue = aio.Queue()
 
-    async def run(c):
-        await asyncio.Future()
+    def create_runner(c):
+        return aio.Group()
 
     def on_srv_state(s, state):
         srv_state_queue.put_nowait(state)
 
     srv = await server.listen(addr, state_cb=on_srv_state)
 
-    conn = await component.connect(addr, 'name', 'group', run)
+    conn = await component.connect(addr, 'name', 'group', create_runner)
     assert conn.ready is False
 
     srv_state = await srv_state_queue.get()
@@ -112,8 +112,8 @@ async def test_state(addr):
     conn_state_queue = aio.Queue()
     srv_state_queue = aio.Queue()
 
-    async def run(c):
-        await asyncio.Future()
+    def create_runner(c):
+        return aio.Group()
 
     def on_conn_state(c, state):
         conn_state_queue.put_nowait(state)
@@ -123,7 +123,7 @@ async def test_state(addr):
 
     srv = await server.listen(addr, state_cb=on_srv_state)
 
-    conn = await component.connect(addr, 'name', 'group', run,
+    conn = await component.connect(addr, 'name', 'group', create_runner,
                                    state_cb=on_conn_state)
 
     srv_state = await srv_state_queue.get()
@@ -151,14 +151,11 @@ async def test_blessing(addr):
     conn_state_queue = aio.Queue()
     srv_state_queue = aio.Queue()
 
-    async def run(c):
+    def create_runner(c):
+        runner = aio.Group()
         start_queue.put_nowait(None)
-
-        try:
-            await asyncio.Future()
-
-        finally:
-            stop_queue.put_nowait(None)
+        runner.spawn(aio.call_on_cancel, stop_queue.put_nowait, None)
+        return runner
 
     def on_conn_state(c, state):
         conn_state_queue.put_nowait(state)
@@ -168,7 +165,7 @@ async def test_blessing(addr):
 
     srv = await server.listen(addr, state_cb=on_srv_state)
 
-    conn = await component.connect(addr, 'name', 'group', run,
+    conn = await component.connect(addr, 'name', 'group', create_runner,
                                    state_cb=on_conn_state)
 
     srv_state = await srv_state_queue.get()
