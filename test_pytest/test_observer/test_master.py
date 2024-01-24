@@ -101,7 +101,7 @@ async def test_msg_master(addr):
 
     conn = await chatter.connect(addr)
 
-    with pytest.raises(TimeoutError):
+    with pytest.raises(asyncio.TimeoutError):
         await aio.wait_for(common.receive_msg(conn), 0.01)
 
     await common.send_msg(conn, 'HatObserver.MsgSlave', {

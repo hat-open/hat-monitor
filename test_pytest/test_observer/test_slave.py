@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from hat import aio
@@ -58,7 +60,7 @@ async def test_msg_slave(addr):
     assert msg_type == 'HatObserver.MsgSlave'
     assert msg_data == {'components': []}
 
-    with pytest.raises(TimeoutError):
+    with pytest.raises(asyncio.TimeoutError):
         await aio.wait_for(common.receive_msg(conn), 0.01)
 
     await slave.update(infos)

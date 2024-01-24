@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from hat import aio
@@ -127,7 +129,7 @@ async def test_state(addr):
     srv_state = await srv_state_queue.get()
     info = srv_state.local_components[0]
 
-    with pytest.raises(TimeoutError):
+    with pytest.raises(asyncio.TimeoutError):
         await aio.wait_for(conn_state_queue.get(), 0.01)
 
     await srv.update(mid=info.mid,
