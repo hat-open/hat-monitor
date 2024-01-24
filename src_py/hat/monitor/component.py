@@ -1,6 +1,6 @@
 """Monitor Component"""
 
-import contextlib
+import asyncio
 import logging
 import typing
 
@@ -69,7 +69,7 @@ async def connect(addr: tcp.Address,
     component._close_req_cb = close_req_cb
     component._blessing_res = common.BlessingRes(token=None,
                                                  ready=False)
-    component._change_queue = aio.Queue()
+    component._change_event = asyncio.Event()
 
     component._client = await client.connect(
         addr, name, group,
@@ -118,8 +118,7 @@ class Component(aio.Resource):
         await self._change_blessing_res(ready=ready)
 
     async def _on_client_state(self, c, state):
-        with contextlib.suppress(aio.QueueClosedError):
-            self._change_queue.put_nowait(None)
+        self._change_event.set()
 
         if not self._state_cb:
             return
@@ -136,8 +135,7 @@ class Component(aio.Resource):
         self._blessing_res = self._blessing_res._replace(**kwargs)
         await self._client.set_blessing_res(self._blessing_res)
 
-        with contextlib.suppress(aio.QueueClosedError):
-            self._change_queue.put_nowait(None)
+        self._change_event.set()
 
     async def _component_loop(self):
         mlog.debug("starting component loop")
@@ -178,7 +176,6 @@ class Component(aio.Resource):
         finally:
             mlog.debug("stopping component loop")
             self.close()
-            self._change_queue.close()
 
     async def _get_blessed_and_ready_token(self):
         while True:
@@ -189,7 +186,8 @@ class Component(aio.Resource):
                 if token is not None:
                     return token
 
-            await self._change_queue.get_until_empty()
+            await self._change_event.wait()
+            self._change_event.clear()
 
     async def _wait_blessed_and_ready_token(self):
         while True:
@@ -205,7 +203,8 @@ class Component(aio.Resource):
             if token == self._blessing_res.token:
                 return token == info.blessing_req.token
 
-            await self._change_queue.get_until_empty()
+            await self._change_event.wait()
+            self._change_event.clear()
 
     async def _wait_while_blessed_and_ready(self):
         while True:
@@ -218,4 +217,5 @@ class Component(aio.Resource):
             if token is None or token != self._blessing_res.token:
                 return
 
-            await self._change_queue.get_until_empty()
+            await self._change_event.wait()
+            self._change_event.clear()
