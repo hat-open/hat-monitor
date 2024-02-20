@@ -57,6 +57,8 @@ async def connect(addr: tcp.Address,
     activity. Once component stops being active, runner is closed. If
     component becomes active again, `component_cb` call is repeated.
 
+    If runner is closed, while component remains active, component is closed.
+
     If connection to Monitor Server is closed, component is also closed.
     If component is closed while active, runner is closed.
 
@@ -158,7 +160,22 @@ class Component(aio.Resource):
                     runner = await aio.call(self._runner_cb, self)
 
                     try:
-                        await self._wait_while_blessed_and_ready()
+                        async with self.async_group.create_subgroup() as subgroup:  # NOQA
+                            blessed_and_ready_task = subgroup.spawn(
+                                self._wait_while_blessed_and_ready)
+                            runner_closing_task = subgroup.spawn(
+                                runner.wait_closing)
+
+                            mlog.debug("wait while blessed and ready")
+                            await asyncio.wait(
+                                [blessed_and_ready_task, runner_closing_task],
+                                return_when=asyncio.FIRST_COMPLETED)
+
+                            if (runner_closing_task.done() and
+                                    not blessed_and_ready_task.done()):
+                                mlog.debug(
+                                    "runner closed while blessed and ready")
+                                break
 
                     finally:
                         mlog.debug("closing component runner")

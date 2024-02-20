@@ -234,3 +234,45 @@ async def test_blessing(addr):
 
     await conn.async_close()
     await srv.async_close()
+
+
+async def test_close_component_when_runner_closed(addr):
+    runner_queue = aio.Queue()
+    srv_state_queue = aio.Queue()
+
+    def create_runner(c):
+        runner = aio.Group()
+        runner_queue.put_nowait(runner)
+        return runner
+
+    def on_srv_state(s, state):
+        srv_state_queue.put_nowait(state)
+
+    srv = await server.listen(addr, state_cb=on_srv_state)
+    conn = await component.connect(addr, 'name', 'group', create_runner)
+
+    await srv_state_queue.get()
+    await conn.set_ready(True)
+
+    await srv_state_queue.get()
+    info = srv.state.local_components[0]
+    req = common.BlessingReq(token=123,
+                             timestamp=321)
+    await srv.update(mid=info.mid,
+                     global_components=[info._replace(blessing_req=req)])
+
+    await srv_state_queue.get()
+    await srv_state_queue.get()
+    info = srv.state.local_components[0]
+    await srv.update(mid=info.mid,
+                     global_components=[info])
+
+    runner = await runner_queue.get()
+
+    assert runner.is_open
+    assert conn.is_open
+
+    runner.close()
+    await conn.wait_closed()
+
+    await srv.async_close()

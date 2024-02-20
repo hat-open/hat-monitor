@@ -22,18 +22,14 @@ mlog: logging.Logger = logging.getLogger('hat.monitor.server.main')
 user_conf_dir: Path = Path(appdirs.user_config_dir('hat'))
 """User configuration directory path"""
 
-conf_suffixes: list[str] = ['.yaml', '.yml', '.toml', '.json']
-"""Configuration path suffixes"""
-
 
 def create_argument_parser() -> argparse.ArgumentParser:
     """Create argument parser"""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--conf', metavar='PATH', type=Path, default=None,
-        help=f"configuration defined by hat-monitor://server.yaml# "
-             f"(default $XDG_CONFIG_HOME/hat/monitor"
-             f"{{{'|'.join(conf_suffixes)}}})")
+        help="configuration defined by hat-monitor://server.yaml# "
+             "(default $XDG_CONFIG_HOME/hat/monitor.{yaml|yml|toml|json})")
     return parser
 
 
@@ -41,19 +37,7 @@ def main():
     """Monitor Server"""
     parser = create_argument_parser()
     args = parser.parse_args()
-
-    conf_path = args.conf
-    if not conf_path:
-        for suffix in conf_suffixes:
-            conf_path = (user_conf_dir / 'monitor').with_suffix(suffix)
-            if conf_path.exists():
-                break
-
-    if conf_path == Path('-'):
-        conf = json.decode_stream(sys.stdin)
-    else:
-        conf = json.decode_file(conf_path)
-
+    conf = json.read_conf(args.conf, user_conf_dir / 'monitor')
     sync_main(conf)
 
 
