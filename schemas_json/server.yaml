@@ -3,14 +3,11 @@ $schema: "http://json-schema.org/schema#"
 id: "hat-monitor://server.yaml#"
 type: object
 required:
-    - type
-    - log
     - default_algorithm
     - group_algorithms
     - server
     - master
     - slave
-    - ui
 properties:
     type:
         const: monitor

@@ -47,7 +47,9 @@ def sync_main(conf: json.Data):
 
     common.json_schema_repo.validate('hat-monitor://server.yaml#', conf)
 
-    logging.config.dictConfig(conf['log'])
+    log_conf = conf.get('log')
+    if log_conf:
+        logging.config.dictConfig(log_conf)
 
     with contextlib.suppress(asyncio.CancelledError):
         aio.run_asyncio(async_main(conf))

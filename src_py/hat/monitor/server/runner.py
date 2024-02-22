@@ -52,13 +52,15 @@ async def create(conf: json.Data) -> 'Runner':
             blessing_cb=runner._calculate_blessing)
         runner._bind_resource(runner._master)
 
-        mlog.debug('starting ui')
-        runner._ui = await hat.monitor.server.ui.create(
-            conf['ui']['host'],
-            conf['ui']['port'],
-            runner._server.state,
-            set_rank_cb=runner._on_ui_set_rank)
-        runner._bind_resource(runner._ui)
+        ui_conf = conf.get('ui')
+        if ui_conf:
+            mlog.debug('starting ui')
+            runner._ui = await hat.monitor.server.ui.create(
+                ui_conf['host'],
+                ui_conf['port'],
+                runner._server.state,
+                set_rank_cb=runner._on_ui_set_rank)
+            runner._bind_resource(runner._ui)
 
         runner.async_group.spawn(runner._runner_loop)
 
