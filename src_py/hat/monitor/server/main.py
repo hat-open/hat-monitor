@@ -28,7 +28,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--conf', metavar='PATH', type=Path, default=None,
-        help="configuration defined by hat-monitor://server.yaml# "
+        help="configuration defined by hat-monitor://server.yaml "
              "(default $XDG_CONFIG_HOME/hat/monitor.{yaml|yml|toml|json})")
     return parser
 
@@ -45,7 +45,7 @@ def sync_main(conf: json.Data):
     """Sync main entry point"""
     aio.init_asyncio()
 
-    common.json_schema_repo.validate('hat-monitor://server.yaml#', conf)
+    common.json_schema_repo.validate('hat-monitor://server.yaml', conf)
 
     log_conf = conf.get('log')
     if log_conf:

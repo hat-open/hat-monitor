@@ -3,9 +3,6 @@ import * as u from '@hat-open/util';
 import * as juggler from '@hat-open/juggler';
 
 
-import '../src_scss/main.scss';
-
-
 type LocalComponent = {
     cid: number,
     name: string | null,
@@ -106,14 +103,14 @@ function localComponentsVt(): u.VNode {
                                 on: {
                                     click: () => setRank(cid, rank - 1)
                                 }},
-                                ['span.fa.fa-chevron-left']
+                                icon('go-previous')
                             ],
                             ['div', String(rank)],
                             ['button', {
                                 on: {
                                     click: () => setRank(cid, rank + 1)
                                 }},
-                                ['span.fa.fa-chevron-right']
+                                icon('go-next')
                             ]
                         ]
                     ]
@@ -205,13 +202,22 @@ function globalComponentsVt(): u.VNode {
                         ''
                     )],
                     ['td.col-ready', (blessing_res.ready ?
-                        ['span.fa.fa-check'] :
-                        ['span.fa.fa-times']
+                        icon('selection-checked') :
+                        icon('process-stop')
                     )]
                 ];
             })]
         ]
     ];
+}
+
+
+function icon(name: string): u.VNode {
+    return ['img.icon', {
+        props: {
+            src: `icons/${name}.svg`
+        }
+    }];
 }
 
 

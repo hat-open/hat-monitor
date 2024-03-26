@@ -10,10 +10,10 @@ be used for service discovery.
 
     Monitor Server functionality is defined under assumptions:
 
-        * components running as part of single system are trusted and
-          implemented according to specifications
-        * communication channels between components on single computing
-          node are reliable
+    * components running as part of single system are trusted and
+      implemented according to specifications
+    * communication channels between components on single computing
+      node are reliable
 
     Redundancy mechanisms provided by Monitor Server do not provide
     reliability in case of possible component malfunctions due to
@@ -26,7 +26,7 @@ Running
 By installing Monitor Server from `hat-monitor` package, executable
 `hat-monitor` becomes available and can be used for starting this component.
 
-    .. program-output:: python -m hat.monitor.server --help
+.. program-output:: python -m hat.monitor.server --help
 
 Additionally, `hat-monitor` package provides implementation of library which
 can be used as basis for communication between components and Monitor Server.
@@ -52,28 +52,28 @@ configuration options available to each Monitor Server on its startup.
 Entities participating in 'vertical' communication between components and local
 monitor server:
 
-    * Client
+* Client
 
-        Component proclaiming its existence to the server, discovering
-        other components and participating in redundancy algorithm.
+  Component proclaiming its existence to the server, discovering
+  other components and participating in redundancy algorithm.
 
-    * Server
+* Server
 
-        Local monitor server providing global components state to all local
-        clients and providing user interface.
+  Local monitor server providing global components state to all local
+  clients and providing user interface.
 
 Entities participating in 'horizontal' communication between Monitor Servers:
 
-    * Master
+* Master
 
-        Monitor Server responsible for execution of the redundancy algorithm
-        and notifying other Monitor Servers about the current global state of
-        the entire system.
+  Monitor Server responsible for execution of the redundancy algorithm
+  and notifying other Monitor Servers about the current global state of
+  the entire system.
 
-    * Slave
+* Slave
 
-        Monitor Server responsible for notifying master about its current local
-        state and delegating master's notifications to its server entity.
+  Monitor Server responsible for notifying master about its current local
+  state and delegating master's notifications to its server entity.
 
 Monitor Server uses two different independent listening sockets for
 client-server and master-slave communication.
@@ -82,49 +82,49 @@ If we represent components with `Cn` and Monitor Servers with `Mn`, where
 master hierarchy of `M1 > ... > Mn` is presumed, an example of a single system
 monitor communication can be viewed as:
 
-    .. graphviz::
-        :align: center
+.. graphviz::
+    :align: center
 
-        graph {
-            bgcolor=transparent;
-            layout=neato;
-            node [fontname="Arial"];
-            {
-                node [shape=box];
-                M1; M2; M3; M4;
-            }
-            {
-                node [shape=oval];
-                C1; C2; C3; C4; C5; C6; C7; C8; C9; C10; C11; C12;
-            }
-            {
-                edge [dir=forward, style=bold, len=2];
-                M2 -- M1;
-                M3 -- M1;
-                M4 -- M1;
-            }
-            {
-                edge [dir=forward, style="bold,dashed", len=2];
-                M3 -- M2;
-                M4 -- M2;
-                M4 -- M3;
-            }
-            {
-                edge [dir=both, arrowsize=0.5];
-                M1 -- C1;
-                M1 -- C2;
-                M1 -- C3;
-                M2 -- C4;
-                M2 -- C5;
-                M2 -- C6;
-                M3 -- C7;
-                M3 -- C8;
-                M3 -- C9;
-                M4 -- C10;
-                M4 -- C11;
-                M4 -- C12;
-            }
+    graph {
+        bgcolor=transparent;
+        layout=neato;
+        node [fontname="Arial"];
+        {
+            node [shape=box];
+            M1; M2; M3; M4;
         }
+        {
+            node [shape=oval];
+            C1; C2; C3; C4; C5; C6; C7; C8; C9; C10; C11; C12;
+        }
+        {
+            edge [dir=forward, style=bold, len=2];
+            M2 -- M1;
+            M3 -- M1;
+            M4 -- M1;
+        }
+        {
+            edge [dir=forward, style="bold,dashed", len=2];
+            M3 -- M2;
+            M4 -- M2;
+            M4 -- M3;
+        }
+        {
+            edge [dir=both, arrowsize=0.5];
+            M1 -- C1;
+            M1 -- C2;
+            M1 -- C3;
+            M2 -- C4;
+            M2 -- C5;
+            M2 -- C6;
+            M3 -- C7;
+            M3 -- C8;
+            M3 -- C9;
+            M4 -- C10;
+            M4 -- C11;
+            M4 -- C12;
+        }
+    }
 
 
 Component information
@@ -141,72 +141,72 @@ clients.
 
 Properties included in a component information:
 
-    * `cid`
+* `cid`
 
-        Component id assigned to client by its local Monitor Server.
+  Component id assigned to client by its local Monitor Server.
 
-    * `mid`
+* `mid`
 
-        Monitor id identifying local Monitor Server (assigned to local Monitor
-        Server by master). Value ``0`` indicates Monitor Server which is master
-        or is not connected to remote master.
+  Monitor id identifying local Monitor Server (assigned to local Monitor
+  Server by master). Value ``0`` indicates Monitor Server which is master
+  or is not connected to remote master.
 
-    * `name`
+* `name`
 
-        User provided identifier of component. This entry is used for
-        UI presentation purposes, logging and rank caching. It is recommended
-        to use unique identifiers for each component instance. This property
-        is assigned by client.
+  User provided identifier of component. This entry is used for
+  UI presentation purposes, logging and rank caching. It is recommended
+  to use unique identifiers for each component instance. This property
+  is assigned by client.
 
-    * `group`
+* `group`
 
-        String identifier by which components are grouped while blessing
-        calculation algorithm is applied (see `Blessing algorithm`_). This
-        property is assigned by client.
+  String identifier by which components are grouped while blessing
+  calculation algorithm is applied (see `Blessing algorithm`_). This
+  property is assigned by client.
 
-    * `data`
+* `data`
 
-        JSON serializable data representing arbitrary information that
-        correspond to the component. This property is assigned by client.
+  JSON serializable data representing arbitrary information that
+  correspond to the component. This property is assigned by client.
 
-    * `rank`
+* `rank`
 
-        Component's rank - used by `Blessing algorithm`_. This property is
-        initially assigned by local Monitor Server. Changes of this property
-        value is available as part of local Monitor Server's UI.
+  Component's rank - used by `Blessing algorithm`_. This property is
+  initially assigned by local Monitor Server. Changes of this property
+  value is available as part of local Monitor Server's UI.
 
-    * `blessing_req`
+* `blessing_req`
 
-        Blessing request assigned and changed exclusively by master
-        Monitor Server (see `Component lifetime`_). It consists of two optional
-        properties:
+  Blessing request assigned and changed exclusively by master
+  Monitor Server (see `Component lifetime`_). It consists of two optional
+  properties:
 
-        - `token` is optional number, used as unique token with the purpose
-          of assigning blessing to the component for its primary functionality.
-          When `token` is ``None``, it means component is not blessed.
-          Hereafter this `token` is called request `token`.
+  - `token` is optional number, used as unique token with the purpose
+    of assigning blessing to the component for its primary functionality.
+    When `token` is ``None``, it means component is not blessed.
+    Hereafter this `token` is called request `token`.
 
-        - `timestamp` is optional number that represents Unix epoch
-          timestamp. It is strongly related to request `token` since
-          corresponds to point in time when master Monitor Server assigned
-          request `token` to the component. When `token` is ``None``, master
-          also sets `timestamp` to``None``.
+  - `timestamp` is optional number that represents Unix epoch
+    timestamp. It is strongly related to request `token` since
+    corresponds to point in time when master Monitor Server assigned
+    request `token` to the component. When `token` is ``None``, master
+    also sets `timestamp` to``None``.
 
-    * `blessing_res`
+* `blessing_res`
 
-        Blessing response assigned and changed exclusively by client
-        (see `Component lifetime`_). It consists of two properties:
+  Blessing response assigned and changed exclusively by client
+  (see `Component lifetime`_). It consists of two properties:
 
-        - `token` is optional number, used as unique token as a client's
-          response to master's blessing request `token`. When response `token`
-          is set to exactly the same value as the request `token`, it means
-          component is active, that is, it started providing its primary
-          functionality. When component is no more active, it revokes this
-          `token` by setting it to ``None``. Hereafter this `token` is called
-          response `token`.
+  - `token` is optional number, used as unique token as a client's
+    response to master's blessing request `token`. When response `token`
+    is set to exactly the same value as the request `token`, it means
+    component is active, that is, it started providing its primary
+    functionality. When component is no more active, it revokes this
+    `token` by setting it to ``None``. Hereafter this `token` is called
+    response `token`.
 
-        - `ready` is boolean indicating whether component is ready to provide
-          its primary functionality.
+  - `ready` is boolean indicating whether component is ready to provide
+    its primary functionality.
 
 
 Master slave communication
@@ -335,21 +335,21 @@ supervised by master Monitor Server. Redundancy utilizes two tokens, the one
 from `blessing_req`, said as request `token`, and the other from
 `blessing_res`, said as response `token`:
 
-    * request `token`
+* request `token`
 
-        This token is controlled exclusively by master Monitor Server.
-        Master gives "blessing for work" to a component by setting this
-        token to an integer number. On the other hand, it revokes blessing
-        by setting this token to ``None``. If connection to master is not
-        established, token's value equals to ``None``.
+  This token is controlled exclusively by master Monitor Server.
+  Master gives "blessing for work" to a component by setting this
+  token to an integer number. On the other hand, it revokes blessing
+  by setting this token to ``None``. If connection to master is not
+  established, token's value equals to ``None``.
 
-    * response `token`
+* response `token`
 
-        This token is controlled exclusively by client. Upon receiving request
-        `token` component starts providing its functionality and sets
-        response `token` to match the request `token` in order to signalize
-        its activity. If, at any time, component stops its activity, it revokes
-        token by setting it to ``None``.
+  This token is controlled exclusively by client. Upon receiving request
+  `token` component starts providing its functionality and sets
+  response `token` to match the request `token` in order to signalize
+  its activity. If, at any time, component stops its activity, it revokes
+  token by setting it to ``None``.
 
 While component information has request and response tokens with the same
 same value, it means component is active. If, at any time,
@@ -390,39 +390,39 @@ and new changes that triggered execution of blessing algorithm.
 
 Currently supported algorithms:
 
-    * BLESS_ALL
+* BLESS_ALL
 
-        This simple algorithm provides blessing to all components in associated
-        group that are ready (`ready` flag of `blessing_res` is ``True``).
-        Blessing is revoked only when `ready` flag is set to ``False``.
+  This simple algorithm provides blessing to all components in associated
+  group that are ready (`ready` flag of `blessing_res` is ``True``).
+  Blessing is revoked only when `ready` flag is set to ``False``.
 
-    * BLESS_ONE
+* BLESS_ONE
 
-        In each group with this algorithm associated, there can be only one
-        highlander and only one blessed component. Only components that are
-        ready (`ready` flag of `blessing_res` is ``True``) are considered as
-        candidates for receiving blessing. In case there is no any ready
-        component, this algorithm will not give blessing to any component.
+  In each group with this algorithm associated, there can be only one
+  highlander and only one blessed component. Only components that are
+  ready (`ready` flag of `blessing_res` is ``True``) are considered as
+  candidates for receiving blessing. In case there is no any ready
+  component, this algorithm will not give blessing to any component.
 
-        For determining which component receives the blessing, multiple ordered
-        criteria are applied sequentially until there is only one component
-        left. If any of the criteria is satisfied by more than one component,
-        the next criteria is applied. Criteria are the following, respectively:
+  For determining which component receives the blessing, multiple ordered
+  criteria are applied sequentially until there is only one component
+  left. If any of the criteria is satisfied by more than one component,
+  the next criteria is applied. Criteria are the following, respectively:
 
-            1) the mathematically lowest `rank`
-            2) request `token` previously set
-            3) the lowest blessing `timestamp`
-            4) the lowest `mid`
+  1) the mathematically lowest `rank`
+  2) request `token` previously set
+  3) the lowest blessing `timestamp`
+  4) the lowest `mid`
 
-        Finally, when algorithm defined the component to be blessed, if that
-        component doesn't already have request token equal to its response
-        token, and there is another component in the group with response token,
-        `master` does not bless any component. It waits until all the
-        components from the group have revoked their response tokens, and only
-        then, issues new request token to the chosen component. In case
-        component to be blessed already has request token equal to its response
-        token, `master` keeps its request token even if there exists a
-        component with response token in the same group.
+  Finally, when algorithm defined the component to be blessed, if that
+  component doesn't already have request token equal to its response
+  token, and there is another component in the group with response token,
+  `master` does not bless any component. It waits until all the
+  components from the group have revoked their response tokens, and only
+  then, issues new request token to the chosen component. In case
+  component to be blessed already has request token equal to its response
+  token, `master` keeps its request token even if there exists a
+  component with response token in the same group.
 
 
 Components rank
@@ -459,7 +459,7 @@ Backend provides to frontends all information that is made available by server
 to clients. This information is provided as continuously updated server state.
 
 State structure is defined by JSON schema
-``hat-monitor://juggler.yaml#/definitions/state``.
+``hat-monitor://juggler.yaml#/$defs/state``.
 
 
 Request/response
@@ -469,7 +469,7 @@ Juggler request/response communication is used primary for enabling user
 control of components' ranks.
 
 Request data structures are defined by JSON schema
-``hat-monitor://juggler.yaml#/definitions/request``.
+``hat-monitor://juggler.yaml#/$defs/request``.
 
 In case of successful request execution, response data is ``null``.
 

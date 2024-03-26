@@ -1,14 +1,22 @@
-@import 'color';
-@import 'fonts/inter';
-@import 'fonts/fontawesome';
+@import url('color.css');
 
+
+html, body, button, input, select {
+    font-family: sans-serif;
+}
 
 html, body {
     margin: 0;
-    font-family: 'Inter';
 }
 
-.monitor {
+img.icon {
+    height: 1.2em;
+    vertical-align: middle;
+    position: relative;
+    top: -0.1em;
+}
+
+body > .monitor {
     max-width: 960px;
     margin: 1rem auto;
     display: flex;
@@ -18,11 +26,11 @@ html, body {
     table {
         border-spacing: 0;
         width: 100%;
-        border: 1px solid $color-grey-400;
+        border: 1px solid var(--color-grey-400);
         table-layout: fixed;
 
         th {
-            background-color: $color-grey-200;
+            background-color: var(--color-grey-200);
         }
 
         td, th {
@@ -37,10 +45,10 @@ html, body {
 
         td {
             text-align: center;
-            border-top: 1px solid $color-grey-400;
+            border-top: 1px solid var(--color-grey-400);
 
             &:not(:last-child) {
-                border-right: 1px solid $color-grey-300;
+                border-right: 1px solid var(--color-grey-300);
             }
         }
 

@@ -9,8 +9,7 @@ LOG_LEVEL=DEBUG
 CONF_PATH=$DATA_PATH/monitor1.yaml
 ALGORITHM=BLESS_ONE
 
-cat > $CONF_PATH << EOF
-type: monitor
+cat > $CONF_PATH <<EOF
 log:
     version: 1
     formatters:

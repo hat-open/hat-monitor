@@ -1,7 +1,6 @@
----
-"$schema": "http://json-schema.org/schema#"
-id: "hat-monitor://juggler.yaml#"
-definitions:
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "hat-monitor://juggler.yaml#"
+$defs:
     state:
         type: object
         required:
@@ -99,4 +98,3 @@ definitions:
                     type: integer
                 rank:
                     type: integer
-...
