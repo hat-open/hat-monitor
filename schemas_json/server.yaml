@@ -108,4 +108,3 @@ $defs:
         enum:
             - BLESS_ALL
             - BLESS_ONE
-...
