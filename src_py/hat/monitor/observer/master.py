@@ -1,5 +1,6 @@
 """Observer Master"""
 
+import collections
 import contextlib
 import itertools
 import logging
@@ -162,9 +163,9 @@ class Master(aio.Resource):
         self._global_components = (self._blessing_cb(self, global_components)
                                    if self._blessing_cb else global_components)
 
-        if components is not None:
-            self._mid_components[mid] = [i for i in self._global_components
-                                         if i.mid == mid]
+        self._mid_components = collections.defaultdict(list)
+        for i in self._global_components:
+            self._mid_components[i.mid].append(i)
 
         if self._global_components_cb:
             await aio.call(self._global_components_cb, self,
