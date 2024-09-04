@@ -144,3 +144,83 @@ async def test_blessing_cb(addr):
                                         for info in infos]
 
     await master.async_close()
+
+
+async def test_update_components_on_different_mids(addr):
+
+    c1 = common.ComponentInfo(
+            cid=1,
+            mid=0,
+            name='c1',
+            group='g1',
+            data=None,
+            rank=1,
+            blessing_req=common.BlessingReq(token=None,
+                                            timestamp=None),
+            blessing_res=common.BlessingRes(token=None,
+                                            ready=True))
+    c2 = common.ComponentInfo(
+            cid=1,
+            mid=1,
+            name='c2',
+            group='g1',
+            data=None,
+            rank=1,
+            blessing_req=common.BlessingReq(token=1,
+                                            timestamp=None),
+            blessing_res=common.BlessingRes(token=None,
+                                            ready=True))
+
+    blessing_input_components_queue = aio.Queue()
+
+    def blessing(m, components):
+        assert m is master
+        blessing_input_components_queue.put_nowait(components)
+        return [c._replace(blessing_req=common.BlessingReq(
+                    token=c.blessing_req.token + 1,
+                    timestamp=None))
+                if (c.mid, c.cid) == (c2.mid, c2.cid) else c
+                for c in components]
+
+    master = await hat.monitor.observer.master.listen(addr,
+                                                      blessing_cb=blessing)
+    master.set_active(True)
+
+    await master.set_local_components([c1])
+    components = await blessing_input_components_queue.get()
+    assert components == [c1]
+
+    conn = await chatter.connect(addr)
+    await asyncio.sleep(0.01)
+
+    await common.send_msg(conn, 'HatObserver.MsgSlave', {
+        'components': [common.component_info_to_sbs(c2)]})
+
+    blessing_input_components = await blessing_input_components_queue.get()
+    c2_after_bless = c2._replace(
+        blessing_req=common.BlessingReq(token=c2.blessing_req.token + 1,
+                                        timestamp=None))
+    assert blessing_input_components == [c1, c2]
+    assert master.global_components == [c1, c2_after_bless]
+
+    c1 = c1._replace(rank=c1.rank + 1)
+    await master.set_local_components([c1])
+    c2 = c2_after_bless
+    c2_after_bless = c2._replace(
+        blessing_req=common.BlessingReq(token=c2.blessing_req.token + 1,
+                                        timestamp=None))
+    blessing_input_components = await blessing_input_components_queue.get()
+    assert blessing_input_components == [c1, c2]
+    assert master.global_components == [c1, c2_after_bless]
+
+    c1 = c1._replace(rank=c1.rank + 1)
+    await master.set_local_components([c1])
+    c2 = c2_after_bless
+    c2_after_bless = c2._replace(
+        blessing_req=common.BlessingReq(token=c2.blessing_req.token + 1,
+                                        timestamp=None))
+    blessing_input_components = await blessing_input_components_queue.get()
+    assert blessing_input_components == [c1, c2]
+    assert master.global_components == [c1, c2_after_bless]
+
+    await master.async_close()
