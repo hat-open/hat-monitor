@@ -126,7 +126,6 @@ class Runner(aio.Resource):
 
             while True:
                 if not self._slave:
-                    await self._server.update(0, [])
                     await self._create_slave_loop(
                         self._slave_conf['connect_retry_count'])
 
