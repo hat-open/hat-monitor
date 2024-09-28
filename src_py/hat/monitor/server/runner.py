@@ -47,10 +47,12 @@ async def create(conf: json.Data) -> 'Runner':
         mlog.debug('starting master')
         runner._master = await hat.monitor.observer.master.listen(
             tcp.Address(conf['master']['host'], conf['master']['port']),
-            local_components=runner._server.state.local_components,
             global_components_cb=runner._on_master_global_components,
             blessing_cb=runner._calculate_blessing)
         runner._bind_resource(runner._master)
+
+        await runner._master.set_local_components(
+            runner._server.state.local_components)
 
         ui_conf = conf.get('ui')
         if ui_conf:
@@ -110,11 +112,18 @@ class Runner(aio.Resource):
             await self._server.set_rank(cid, rank)
 
     async def _on_slave_state(self, slave, state):
-        if (self._server and
-                self._master and
-                not self._master.is_active and
-                state.mid is not None):
-            await self._server.update(state.mid, state.global_components)
+        if not self._server or not self._master:
+            return
+
+        if state.mid is None or self._master.is_active:
+            return
+
+        await self._master.set_local_blessing_reqs(
+            (info.cid, info.blessing_req)
+            for info in state.global_components
+            if info.mid == state.mid)
+
+        await self._server.update(state.mid, state.global_components)
 
     async def _runner_loop(self):
         try:
@@ -156,7 +165,7 @@ class Runner(aio.Resource):
                                self.close)
 
     def _calculate_blessing(self, master, components):
-        return hat.monitor.server.blessing.calculate(
+        yield from hat.monitor.server.blessing.calculate(
             components=components,
             default_algorithm=self._default_algorithm,
             group_algorithms=self._group_algorithms)

@@ -1,5 +1,7 @@
 """Implementation of blessing calculation algorithms"""
 
+from collections.abc import Iterable
+import collections
 import enum
 import itertools
 import time
@@ -15,11 +17,11 @@ class Algorithm(enum.Enum):
     BLESS_ONE = 'BLESS_ONE'
 
 
-def calculate(components: list[common.ComponentInfo],
+def calculate(components: Iterable[common.ComponentInfo],
               group_algorithms: dict[str, Algorithm],
               default_algorithm: Algorithm
-              ) -> list[common.ComponentInfo]:
-    """Calculate blessing
+              ) -> Iterable[tuple[common.Mid, common.Cid, common.BlessingReq]]:
+    """Calculate blessing request changes
 
     Args:
         components: components state with previous blessing tokens
@@ -27,48 +29,45 @@ def calculate(components: list[common.ComponentInfo],
         default_algorithm: default algorithm
 
     Returns:
-        components state with updated blessing
+        blessing request changes
 
     """
-    group_components = {}
+    group_components = collections.defaultdict(collections.deque)
     for c in components:
-        group_components.setdefault(c.group, []).append(c)
+        group_components[c.group].append(c)
 
-    blessings = {}
     for group, components_from_group in group_components.items():
         algorithm = group_algorithms.get(group, default_algorithm)
-        for c in _calculate_group(algorithm, components_from_group):
-            blessings[c.mid, c.cid] = c.blessing_req
 
-    result = [c._replace(blessing_req=blessings[c.mid, c.cid])
-              for c in components]
-
-    return result
+        yield from _calculate_group(algorithm, components_from_group)
 
 
 def _calculate_group(algorithm, components):
     if algorithm == Algorithm.BLESS_ALL:
-        return _bless_all(components)
+        yield from _bless_all(components)
 
-    if algorithm == Algorithm.BLESS_ONE:
-        return _bless_one(components)
+    elif algorithm == Algorithm.BLESS_ONE:
+        yield from _bless_one(components)
 
-    raise ValueError('unsupported algorithm')
+    else:
+        raise ValueError('unsupported algorithm')
 
 
 def _bless_all(components):
     for c in components:
         if not c.blessing_res.ready:
-            yield c._replace(blessing_req=common.BlessingReq(token=None,
-                                                             timestamp=None))
+            blessing_req = common.BlessingReq(token=None,
+                                              timestamp=None)
 
         elif _has_blessing(c):
-            yield c
+            blessing_req = c.blessing_req
 
         else:
-            blessing = common.BlessingReq(token=next(_next_tokens),
-                                          timestamp=time.time())
-            yield c._replace(blessing_req=blessing)
+            blessing_req = common.BlessingReq(token=next(_next_tokens),
+                                              timestamp=time.time())
+
+        if c.blessing_req != blessing_req:
+            yield c.mid, c.cid, blessing_req
 
 
 def _bless_one(components):
@@ -108,17 +107,18 @@ def _bless_one(components):
 
     for c in components:
         if c != highlander:
-            blessing = common.BlessingReq(token=None,
-                                          timestamp=None)
-            yield c._replace(blessing_req=blessing)
+            blessing_req = common.BlessingReq(token=None,
+                                              timestamp=None)
 
         elif not _has_blessing(c):
-            blessing = common.BlessingReq(token=next(_next_tokens),
-                                          timestamp=time.time())
-            yield c._replace(blessing_req=blessing)
+            blessing_req = common.BlessingReq(token=next(_next_tokens),
+                                              timestamp=time.time())
 
         else:
-            yield c
+            blessing_req = c.blessing_req
+
+        if c.blessing_req != blessing_req:
+            yield c.mid, c.cid, blessing_req
 
 
 def _has_blessing(component):

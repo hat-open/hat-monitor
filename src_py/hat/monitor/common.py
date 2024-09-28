@@ -18,6 +18,11 @@ with importlib.resources.as_file(importlib.resources.files(__package__) /
     sbs_repo: sbs.Repository = sbs.Repository.from_json(_path)
 
 
+Cid: typing.TypeAlias = int
+
+Mid: typing.TypeAlias = int
+
+
 class BlessingReq(typing.NamedTuple):
     token: int | None
     timestamp: float | None
@@ -29,8 +34,8 @@ class BlessingRes(typing.NamedTuple):
 
 
 class ComponentInfo(typing.NamedTuple):
-    cid: int
-    mid: int
+    cid: Cid
+    mid: Mid
     name: str | None
     group: str | None
     data: json.Data

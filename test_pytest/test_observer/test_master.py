@@ -127,11 +127,12 @@ async def test_msg_master(addr):
 
 
 async def test_blessing_cb(addr):
+    blessing_req = common.BlessingReq(123, 321)
 
     def blessing(m, components):
         assert m is master
-        return [component._replace(rank=component.rank + 1)
-                for component in components]
+        return [(info.mid, info.cid, blessing_req)
+                for info in components]
 
     master = await hat.monitor.observer.master.listen(addr,
                                                       blessing_cb=blessing)
@@ -139,9 +140,10 @@ async def test_blessing_cb(addr):
 
     await master.set_local_components(infos)
 
-    assert master.global_components == [info._replace(mid=0,
-                                                      rank=info.rank + 1)
-                                        for info in infos]
+    assert master.global_components == [
+        info._replace(mid=0,
+                      blessing_req=blessing_req)
+        for info in infos]
 
     await master.async_close()
 
@@ -174,13 +176,15 @@ async def test_update_components_on_different_mids(addr):
     blessing_input_components_queue = aio.Queue()
 
     def blessing(m, components):
+        components = list(components)
         assert m is master
         blessing_input_components_queue.put_nowait(components)
-        return [c._replace(blessing_req=common.BlessingReq(
-                    token=c.blessing_req.token + 1,
-                    timestamp=None))
-                if (c.mid, c.cid) == (c2.mid, c2.cid) else c
-                for c in components]
+        return [(c.mid,
+                 c.cid,
+                 common.BlessingReq(token=c.blessing_req.token + 1,
+                                    timestamp=None))
+                for c in components
+                if (c.mid, c.cid) == (c2.mid, c2.cid)]
 
     master = await hat.monitor.observer.master.listen(addr,
                                                       blessing_cb=blessing)
@@ -224,3 +228,8 @@ async def test_update_components_on_different_mids(addr):
     assert master.global_components == [c1, c2_after_bless]
 
     await master.async_close()
+
+
+@pytest.mark.skip('WIP')
+def test_set_local_blessing_reqs():
+    pass

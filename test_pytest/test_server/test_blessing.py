@@ -36,108 +36,109 @@ def group_component_infos(blessing_reqs, ranks, *, mids=None,
             for i, (mid, blessing_req, rank, blessing_res) in temp_iter]
 
 
-def assert_infos_equal(infos1, infos2):
-    assert len(infos1) == len(infos2)
-    for info1, info2 in zip(infos1, infos2):
-        if info1.blessing_req is generic_blessing:
-            if info2.blessing_req.token is not None:
-                info1 = info1._replace(blessing_req=info2.blessing_req)
+def assert_blessing_req_equal(blessing_req1, blessing_req2):
+    if blessing_req1 is generic_blessing:
+        assert blessing_req2 != no_blessing
 
-        if info2.blessing_req is generic_blessing:
-            if info1.blessing_req.token is not None:
-                info2 = info2._replace(blessing_req=info1.blessing_req)
+    elif blessing_req2 is generic_blessing:
+        assert blessing_req1 != no_blessing
 
-        assert info1 == info2
+    else:
+        assert blessing_req1 == blessing_req2
 
 
-@pytest.mark.parametrize("components, result", [
-    ([], []),
+@pytest.mark.parametrize("algorithm, components, blessing_reqs", [
+    (blessing.Algorithm.BLESS_ALL,
+     [],
+     []),
 
-    ([component_info(cid=g_id * 10 + c_id, group=f'g{g_id}',
+    (blessing.Algorithm.BLESS_ALL,
+     [component_info(cid=g_id * 10 + c_id, group=f'g{g_id}',
                      blessing_res=ready)
       for g_id in range(3)
       for c_id in range(5)],
-     [component_info(cid=g_id * 10 + c_id, group=f'g{g_id}',
-                     blessing_req=generic_blessing, blessing_res=ready)
+     [generic_blessing
       for g_id in range(3)
       for c_id in range(5)]),
 
-    ([component_info(cid=g_id * 10 + c_id, group=f'g{g_id}',
+    (blessing.Algorithm.BLESS_ALL,
+     [component_info(cid=g_id * 10 + c_id, group=f'g{g_id}',
                      blessing_req=common.BlessingReq(token=123, timestamp=2.0),
                      blessing_res=ready)
       for g_id in range(3)
       for c_id in range(5)],
-     [component_info(cid=g_id * 10 + c_id, group=f'g{g_id}',
-                     blessing_req=generic_blessing, blessing_res=ready)
+     [generic_blessing
       for g_id in range(3)
       for c_id in range(5)]),
 
-    ([component_info(cid=g_id * 10 + c_id, group=f'g{g_id}')
+    (blessing.Algorithm.BLESS_ALL,
+     [component_info(cid=g_id * 10 + c_id, group=f'g{g_id}')
       for g_id in range(3)
       for c_id in range(5)],
-     [component_info(cid=g_id * 10 + c_id, group=f'g{g_id}',
-                     blessing_req=no_blessing)
+     [no_blessing
       for g_id in range(3)
       for c_id in range(5)]),
-])
-def test_bless_all(components, result):
-    calculated_result = blessing.calculate(
-        components=components,
-        group_algorithms={},
-        default_algorithm=blessing.Algorithm.BLESS_ALL)
-    assert_infos_equal(result, calculated_result)
 
+    (blessing.Algorithm.BLESS_ONE,
+     [],
+     []),
 
-@pytest.mark.parametrize("components, blessing_reqs", [
-    ([], []),
-
-    (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[ready, ready],
                            ranks=[1, 1]),
      [generic_blessing, no_blessing]),
 
-    (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[not_ready, ready],
                            ranks=[1, 1]),
      [no_blessing, generic_blessing]),
 
-    (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[not_ready, not_ready],
                            ranks=[1, 1]),
      [no_blessing, no_blessing]),
 
-    (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[ready, ready],
                            ranks=[1, 2]),
      [generic_blessing, no_blessing]),
 
-    (group_component_infos(blessing_reqs=[no_blessing, no_blessing],
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(blessing_reqs=[no_blessing, no_blessing],
                            blessing_ress=[ready, ready],
                            ranks=[2, 1]),
      [no_blessing, generic_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=123, timestamp=2.0),
                         no_blessing],
          blessing_ress=[ready, ready],
          ranks=[1, 1]),
      [common.BlessingReq(token=123, timestamp=2.0), no_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[no_blessing, common.BlessingReq(token=123,
                                                         timestamp=2.0)],
          blessing_ress=[ready, ready],
          ranks=[1, 1]),
      [no_blessing, common.BlessingReq(token=123, timestamp=2.0)]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[no_blessing, no_blessing],
          blessing_ress=[common.BlessingRes(token=123, ready=True),
                         common.BlessingRes(token=456, ready=True)],
          ranks=[1, 1]),
      [no_blessing, no_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=1, timestamp=2.0),
                         no_blessing],
          blessing_ress=[common.BlessingRes(token=123, ready=True),
@@ -145,7 +146,8 @@ def test_bless_all(components, result):
          ranks=[1, 1]),
      [no_blessing, no_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=123, timestamp=2.0),
                         no_blessing],
          blessing_ress=[common.BlessingRes(token=123, ready=True),
@@ -153,7 +155,8 @@ def test_bless_all(components, result):
          ranks=[1, 1]),
      [common.BlessingReq(token=123, timestamp=2.0), no_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[no_blessing,
                         common.BlessingReq(token=456, timestamp=2.0)],
          blessing_ress=[common.BlessingRes(token=123, ready=True),
@@ -161,19 +164,22 @@ def test_bless_all(components, result):
          ranks=[1, 1]),
      [no_blessing, common.BlessingReq(token=456, timestamp=2.0)]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[no_blessing, no_blessing],
          blessing_ress=[not_ready, ready],
          ranks=[1, 2]),
      [no_blessing, generic_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[no_blessing, no_blessing],
          blessing_ress=[not_ready, not_ready],
          ranks=[1, 2]),
      [no_blessing, no_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=123, timestamp=2.0),
                         common.BlessingReq(token=456, timestamp=3.0)],
          blessing_ress=[common.BlessingRes(token=123, ready=True),
@@ -181,7 +187,8 @@ def test_bless_all(components, result):
          ranks=[1, 1]),
      [common.BlessingReq(token=123, timestamp=2.0), no_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=123, timestamp=2.0),
                         no_blessing],
          blessing_ress=[ready, common.BlessingRes(token=456, ready=True)],
@@ -189,14 +196,16 @@ def test_bless_all(components, result):
      [no_blessing, no_blessing]),
 
     # if no timestamp, not considered as blessed
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=123, timestamp=None),
                         common.BlessingReq(token=456, timestamp=3.0)],
          blessing_ress=[ready, ready],
          ranks=[1, 1]),
      [no_blessing, common.BlessingReq(token=456, timestamp=3.0)]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=123, timestamp=3.0),
                         common.BlessingReq(token=456, timestamp=2.0)],
          blessing_ress=[common.BlessingRes(token=123, ready=True),
@@ -204,7 +213,8 @@ def test_bless_all(components, result):
          ranks=[1, 1]),
      [no_blessing, common.BlessingReq(token=456, timestamp=2.0)]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=123, timestamp=2.0),
                         common.BlessingReq(token=456, timestamp=2.0)],
          blessing_ress=[common.BlessingRes(token=123, ready=True),
@@ -213,7 +223,8 @@ def test_bless_all(components, result):
          mids=[0, 1]),
      [common.BlessingReq(token=123, timestamp=2.0), no_blessing]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[common.BlessingReq(token=123, timestamp=2.0),
                         common.BlessingReq(token=456, timestamp=2.0)],
          blessing_ress=[common.BlessingRes(token=123, ready=True),
@@ -222,7 +233,8 @@ def test_bless_all(components, result):
          mids=[1, 0]),
      [no_blessing, common.BlessingReq(token=456, timestamp=2.0)]),
 
-    (group_component_infos(
+    (blessing.Algorithm.BLESS_ONE,
+     group_component_infos(
          blessing_reqs=[no_blessing,
                         common.BlessingReq(token=456, timestamp=2.0)],
          blessing_ress=[ready,
@@ -230,20 +242,15 @@ def test_bless_all(components, result):
          ranks=[1, 2],
          mids=[0, 1]),
      [no_blessing, no_blessing]),
-
 ])
-def test_bless_one(components, blessing_reqs):
-    calculated_result = blessing.calculate(
-        components=components,
-        group_algorithms={},
-        default_algorithm=blessing.Algorithm.BLESS_ONE)
-    result = [component_info(cid=component.cid,
-                             mid=component.mid,
-                             name=component.name,
-                             group=component.group,
-                             data=component.data,
-                             rank=component.rank,
-                             blessing_req=blessing_req,
-                             blessing_res=component.blessing_res)
-              for component, blessing_req in zip(components, blessing_reqs)]
-    assert_infos_equal(result, calculated_result)
+def test_bless_all(algorithm, components, blessing_reqs):
+    changes = {
+        (mid, cid): blessing_req
+        for mid, cid, blessing_req in blessing.calculate(
+            components=components,
+            group_algorithms={},
+            default_algorithm=algorithm)}
+
+    for info, blessing_req in zip(components, blessing_reqs):
+        result = changes.get((info.mid, info.cid), info.blessing_req)
+        assert_blessing_req_equal(result, blessing_req)

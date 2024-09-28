@@ -1,6 +1,6 @@
 """Observer Master"""
 
-import collections
+from collections.abc import Iterable
 import contextlib
 import itertools
 import logging
@@ -16,20 +16,19 @@ from hat.monitor.observer import common
 mlog: logging.Logger = logging.getLogger(__name__)
 """Module logger"""
 
-ComponentsCb: typing.TypeAlias = aio.AsyncCallable[['Master',
-                                                    list[common.ComponentInfo]],  # NOQA
-                                                   None]
+ComponentsCb: typing.TypeAlias = aio.AsyncCallable[
+    ['Master', list[common.ComponentInfo]],
+    None]
 """Components callback"""
 
-BlessingCb: typing.TypeAlias = typing.Callable[['Master',
-                                                list[common.ComponentInfo]],
-                                               list[common.ComponentInfo]]
+BlessingCb: typing.TypeAlias = typing.Callable[
+    ['Master', Iterable[common.ComponentInfo]],
+    Iterable[tuple[common.Mid, common.Cid, common.BlessingReq]]]
 """Blessing callback"""
 
 
 async def listen(addr: tcp.Address,
                  *,
-                 local_components: list[common.ComponentInfo] = [],
                  global_components_cb: ComponentsCb | None = None,
                  blessing_cb: BlessingCb | None = None,
                  **kwargs
@@ -46,9 +45,8 @@ async def listen(addr: tcp.Address,
     master._global_components_cb = global_components_cb
     master._blessing_cb = blessing_cb
     master._mid_conns = {}
-    master._mid_components = {0: [i._replace(mid=0) for i in local_components]}
-    master._global_components = list(
-        _get_global_components(master._mid_components))
+    master._mid_cid_infos = {0: {}}
+    master._global_components = []
     master._next_mids = itertools.count(1)
     master._active_subgroup = None
 
@@ -87,8 +85,23 @@ class Master(aio.Resource):
             self._active_subgroup.close()
             self._active_subgroup = None
 
-    async def set_local_components(self, local_components):
+    async def set_local_components(self, local_components: Iterable[common.ComponentInfo]):  # NOQA
         await self._update_components(0, local_components)
+
+    async def set_local_blessing_reqs(self, blessing_reqs: Iterable[tuple[common.Cid, common.BlessingReq]]):  # NOQA
+        change = False
+
+        for cid, blessing_req in blessing_reqs:
+            info = self._mid_cid_infos[0].get(cid)
+            if not info or info.blessing_req == blessing_req:
+                continue
+
+            self._mid_cid_infos[0][cid] = info._replace(
+                blessing_req=blessing_req)
+            change = True
+
+        if change:
+            await self._update_global_components()
 
     def _on_connection(self, conn):
         try:
@@ -102,23 +115,23 @@ class Master(aio.Resource):
 
         mlog.debug('starting slave loop (mid: %s)', mid)
         try:
-            msg_type, msg_data = await common.receive_msg(conn)
-
-            if msg_type != 'HatObserver.MsgSlave':
-                raise Exception('unsupported message type')
-
-            self._mid_conns[mid] = conn
-
             while True:
-                mlog.debug('received msg slave (mid: %s)', mid)
-                components = [common.component_info_from_sbs(i)
-                              for i in msg_data['components']]
-                await self._update_components(mid, components)
-
                 msg_type, msg_data = await common.receive_msg(conn)
 
                 if msg_type != 'HatObserver.MsgSlave':
                     raise Exception('unsupported message type')
+
+                mlog.debug('received msg slave (mid: %s)', mid)
+                components = (common.component_info_from_sbs(i)
+                              for i in msg_data['components'])
+                await self._update_components(mid, components)
+
+                if mid not in self._mid_conns:
+                    self._mid_conns[mid] = conn
+
+                    global_components = list(
+                        _flatten_mid_cid_infos(self._mid_cid_infos))
+                    await _send_msg_master(conn, mid, global_components)
 
         except ConnectionError:
             pass
@@ -132,48 +145,52 @@ class Master(aio.Resource):
             await aio.uncancellable(self._remove_slave(mid))
 
     async def _remove_slave(self, mid):
-        conn = self._mid_conns.pop(mid, None)
-        if not conn:
+        self._mid_conns.pop(mid, None)
+
+        if not self._mid_cid_infos.pop(mid, None):
             return
 
-        await self._update_components(mid, None)
+        await self._update_global_components()
 
     async def _update_components(self, mid, components):
-        if components is None:
-            if mid not in self._mid_components:
-                return
+        cid_infos = self._mid_cid_infos.get(mid, {})
 
-            self._mid_components.pop(mid)
+        self._mid_cid_infos[mid] = {}
+        for info in components:
+            info = info._replace(mid=mid)
 
-        else:
-            blessing_reqs = {i.cid: i.blessing_req
-                             for i in self._mid_components.get(mid, [])}
-            components = [
-                i._replace(mid=mid,
-                           blessing_req=blessing_reqs.get(i.cid,
-                                                          i.blessing_req))
-                for i in components]
+            old_info = cid_infos.get(info.cid)
+            if old_info:
+                info = info._replace(blessing_req=old_info.blessing_req)
 
-            if self._mid_components.get(mid) == components:
-                return
+            self._mid_cid_infos[mid][info.cid] = info
 
-            self._mid_components[mid] = components
+        if self._mid_cid_infos[mid] == cid_infos:
+            return
 
-        global_components = list(_get_global_components(self._mid_components))
-        self._global_components = (self._blessing_cb(self, global_components)
-                                   if self._blessing_cb else global_components)
+        await self._update_global_components()
 
-        self._mid_components = collections.defaultdict(list)
-        for i in self._global_components:
-            self._mid_components[i.mid].append(i)
+    async def _update_global_components(self):
+        if self._blessing_cb:
+            infos = _flatten_mid_cid_infos(self._mid_cid_infos)
+
+            for mid, cid, blessing_req in self._blessing_cb(self, infos):
+                info = self._mid_cid_infos[mid][cid]
+                info = info._replace(blessing_req=blessing_req)
+                self._mid_cid_infos[mid][cid] = info
+
+        global_components = list(_flatten_mid_cid_infos(self._mid_cid_infos))
+        if global_components == self._global_components:
+            return
+
+        self._global_components = global_components
 
         if self._global_components_cb:
-            await aio.call(self._global_components_cb, self,
-                           self._global_components)
+            await aio.call(self._global_components_cb, self, global_components)
 
         for mid, conn in list(self._mid_conns.items()):
             with contextlib.suppress(ConnectionError):
-                await _send_msg_master(conn, mid, self._global_components)
+                await _send_msg_master(conn, mid, global_components)
 
 
 async def _send_msg_master(conn, mid, global_components):
@@ -183,6 +200,6 @@ async def _send_msg_master(conn, mid, global_components):
         'components': components})
 
 
-def _get_global_components(mid_components):
-    for mid in sorted(mid_components.keys()):
-        yield from mid_components[mid]
+def _flatten_mid_cid_infos(mid_cid_infos):
+    for cid_infos in mid_cid_infos.values():
+        yield from cid_infos.values()
