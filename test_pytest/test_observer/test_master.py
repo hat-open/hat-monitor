@@ -230,6 +230,41 @@ async def test_update_components_on_different_mids(addr):
     await master.async_close()
 
 
-@pytest.mark.skip('WIP')
-def test_set_local_blessing_reqs():
-    pass
+async def test_set_local_blessing_reqs(addr):
+    components_queue = aio.Queue()
+    info = common.ComponentInfo(
+            cid=1,
+            mid=0,
+            name='c1',
+            group='g1',
+            data=None,
+            rank=1,
+            blessing_req=common.BlessingReq(token=None,
+                                            timestamp=None),
+            blessing_res=common.BlessingRes(token=None,
+                                            ready=True))
+    blessing_req = common.BlessingReq(token=123,
+                                      timestamp=321),
+
+    def on_components(master, components):
+        components_queue.put_nowait(components)
+
+    master = await hat.monitor.observer.master.listen(
+        addr,
+        global_components_cb=on_components)
+
+    assert components_queue.empty()
+
+    await master.set_local_components([info])
+
+    components = await components_queue.get()
+    assert components == [info]
+
+    await master.set_local_blessing_reqs([(info.cid, blessing_req)])
+
+    components = await components_queue.get()
+    assert components == [info._replace(blessing_req=blessing_req)]
+
+    assert components_queue.empty()
+
+    await master.async_close()
