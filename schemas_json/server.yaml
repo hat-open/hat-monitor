@@ -104,6 +104,10 @@ $defs:
             port:
                 type: integer
                 default: 23022
+            htpasswd:
+                type: string
+                description: |
+                    basic authentication users
     algorithm:
         enum:
             - BLESS_ALL

@@ -1,5 +1,6 @@
 """Implementation of web server UI"""
 
+from pathlib import Path
 import contextlib
 import importlib.resources
 import logging
@@ -24,6 +25,7 @@ async def create(host: str,
                  state: hat.monitor.observer.server.State,
                  *,
                  set_rank_cb: SetRankCb | None = None,
+                 htpasswd: Path | None = None,
                  autoflush_delay: float | None = 0.2,
                  shutdown_timeout: float = 0.1
                  ) -> 'UiServer':
@@ -46,6 +48,7 @@ async def create(host: str,
         server._srv = await juggler.listen(host, port,
                                            request_cb=server._on_request,
                                            static_dir=ui_path,
+                                           htpasswd_file=htpasswd,
                                            autoflush_delay=autoflush_delay,
                                            shutdown_timeout=shutdown_timeout,
                                            state=server._state)

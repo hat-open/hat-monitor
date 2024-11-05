@@ -1,3 +1,4 @@
+from pathlib import Path
 import asyncio
 import contextlib
 import itertools
@@ -57,6 +58,8 @@ async def create(conf: json.Data) -> 'Runner':
         ui_conf = conf.get('ui')
         if ui_conf:
             mlog.debug('starting ui')
+            htpasswd = (Path(ui_conf['htpasswd']) if 'htpasswd' in ui_conf
+                        else None)
             runner._ui = await hat.monitor.server.ui.create(
                 ui_conf['host'],
                 ui_conf['port'],
