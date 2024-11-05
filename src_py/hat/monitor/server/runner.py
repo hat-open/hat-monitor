@@ -64,7 +64,8 @@ async def create(conf: json.Data) -> 'Runner':
                 ui_conf['host'],
                 ui_conf['port'],
                 runner._server.state,
-                set_rank_cb=runner._on_ui_set_rank)
+                set_rank_cb=runner._on_ui_set_rank,
+                htpasswd=htpasswd)
             runner._bind_resource(runner._ui)
 
         runner.async_group.spawn(runner._runner_loop)
