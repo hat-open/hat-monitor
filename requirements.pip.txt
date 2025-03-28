@@ -1,10 +1,10 @@
 appdirs ~=1.4.4
-hat-aio ~=0.7.11
-hat-doit ~=0.16.0
-hat-drivers ~=0.8.14
-hat-json ~=0.6.1
-hat-juggler ~=0.7.0
+hat-aio ~=0.7.12
+hat-doit ~=0.16.2
+hat-drivers ~=0.9.1
+hat-json ~=0.6.2
+hat-juggler ~=0.7.1
 hat-sbs ~=0.7.5
-hat-util ~=0.6.17
+hat-util ~=0.6.19
 psutil >=5.9.5
 sphinxcontrib-programoutput >=0.17
