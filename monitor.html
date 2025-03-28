@@ -1,0 +1,1083 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="search" title="Search" href="search.html" /><link rel="prev" title="hat-monitor - Monitor server and client" href="index.html" />
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
+        <title>Monitor Server - hat-monitor documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
+    <link rel="stylesheet" type="text/css" href="_static/hat.css?v=d90f72ce" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">hat-monitor  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">hat-monitor  documentation</span>
+  
+</a><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Monitor Server</a></li>
+</ul>
+
+</div></div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="monitor-server">
+<h1>Monitor Server<a class="headerlink" href="#monitor-server" title="Link to this heading">¶</a></h1>
+<p>Monitor Server is component responsible for providing infrastructure necessary
+for multiple redundant component execution. Additionally, Monitor Server
+provides centralized registry of running components in single system which can
+be used for service discovery.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Monitor Server functionality is defined under assumptions:</p>
+<ul class="simple">
+<li><p>components running as part of single system are trusted and
+implemented according to specifications</p></li>
+<li><p>communication channels between components on single computing
+node are reliable</p></li>
+</ul>
+<p>Redundancy mechanisms provided by Monitor Server do not provide
+reliability in case of possible component malfunctions due to
+implementation errors.</p>
+</div>
+<section id="running">
+<h2>Running<a class="headerlink" href="#running" title="Link to this heading">¶</a></h2>
+<p>By installing Monitor Server from <cite>hat-monitor</cite> package, executable
+<cite>hat-monitor</cite> becomes available and can be used for starting this component.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: hat-monitor [-h] [--conf PATH]
+
+options:
+  -h, --help   show this help message and exit
+  --conf PATH  configuration defined by hat-monitor://server.yaml (default
+               $XDG_CONFIG_HOME/hat/monitor.{yaml|yml|toml|json})
+</pre></div>
+</div>
+<p>Additionally, <cite>hat-monitor</cite> package provides implementation of library which
+can be used as basis for communication between components and Monitor Server.
+This library is available in <cite>hat.monitor.component</cite> module.</p>
+</section>
+<section id="communication-model">
+<h2>Communication model<a class="headerlink" href="#communication-model" title="Link to this heading">¶</a></h2>
+<p>Monitor Server provides n-node redundancy architecture based on
+chatter protocol (structure of communication messages is
+defined in <cite>HatObserver</cite> package). It is based on server-client communication
+between components and monitor server. There also exists horizontal peer
+communication between multiple monitor servers which enables forming of
+single system based on multiple distributed computing nodes. It is assumed
+that, for each system, single computing node runs single instance of Monitor
+Server and unlimited number of components that connect to local Monitor Server.
+Each node’s Monitor Server establishes communication with other nodes’ Monitor
+Server through single master Monitor Server. Hierarchy of Monitor Servers
+which can perform functionality of master is configured statically with
+configuration options available to each Monitor Server on its startup.</p>
+<p>Entities participating in ‘vertical’ communication between components and local
+monitor server:</p>
+<ul>
+<li><p>Client</p>
+<p>Component proclaiming its existence to the server, discovering
+other components and participating in redundancy algorithm.</p>
+</li>
+<li><p>Server</p>
+<p>Local monitor server providing global components state to all local
+clients and providing user interface.</p>
+</li>
+</ul>
+<p>Entities participating in ‘horizontal’ communication between Monitor Servers:</p>
+<ul>
+<li><p>Master</p>
+<p>Monitor Server responsible for execution of the redundancy algorithm
+and notifying other Monitor Servers about the current global state of
+the entire system.</p>
+</li>
+<li><p>Slave</p>
+<p>Monitor Server responsible for notifying master about its current local
+state and delegating master’s notifications to its server entity.</p>
+</li>
+</ul>
+<p>Monitor Server uses two different independent listening sockets for
+client-server and master-slave communication.</p>
+<p>If we represent components with <cite>Cn</cite> and Monitor Servers with <cite>Mn</cite>, where
+master hierarchy of <cite>M1 &gt; … &gt; Mn</cite> is presumed, an example of a single system
+monitor communication can be viewed as:</p>
+<div align="center" class="align-center"><div class="graphviz"><img src="_images/graphviz-4fd63fb9290bc2295f314b522c919b618bcb2814.png" alt="graph {
+    bgcolor=transparent;
+    layout=neato;
+    node [fontname=&quot;Arial&quot;];
+    {
+        node [shape=box];
+        M1; M2; M3; M4;
+    }
+    {
+        node [shape=oval];
+        C1; C2; C3; C4; C5; C6; C7; C8; C9; C10; C11; C12;
+    }
+    {
+        edge [dir=forward, style=bold, len=2];
+        M2 -- M1;
+        M3 -- M1;
+        M4 -- M1;
+    }
+    {
+        edge [dir=forward, style=&quot;bold,dashed&quot;, len=2];
+        M3 -- M2;
+        M4 -- M2;
+        M4 -- M3;
+    }
+    {
+        edge [dir=both, arrowsize=0.5];
+        M1 -- C1;
+        M1 -- C2;
+        M1 -- C3;
+        M2 -- C4;
+        M2 -- C5;
+        M2 -- C6;
+        M3 -- C7;
+        M3 -- C8;
+        M3 -- C9;
+        M4 -- C10;
+        M4 -- C11;
+        M4 -- C12;
+    }
+}" class="graphviz" /></div>
+</div>
+</section>
+<section id="component-information">
+<h2>Component information<a class="headerlink" href="#component-information" title="Link to this heading">¶</a></h2>
+<p>Component information is basic structure of properties that describe each
+component included in system. It is initially created on local Monitor Server
+and later updated by master Monitor Server. Collection of all components
+information associated with clients connected to local Monitor Server and
+calculated by local Monitor Server is called local state. Collection of all
+components information in single system calculated by master Monitor server is
+called global state. Each Monitor Server provides global state to its local
+clients.</p>
+<p>Properties included in a component information:</p>
+<ul>
+<li><p><cite>cid</cite></p>
+<p>Component id assigned to client by its local Monitor Server.</p>
+</li>
+<li><p><cite>mid</cite></p>
+<p>Monitor id identifying local Monitor Server (assigned to local Monitor
+Server by master). Value <code class="docutils literal notranslate"><span class="pre">0</span></code> indicates Monitor Server which is master
+or is not connected to remote master.</p>
+</li>
+<li><p><cite>name</cite></p>
+<p>User provided identifier of component. This entry is used for
+UI presentation purposes, logging and rank caching. It is recommended
+to use unique identifiers for each component instance. This property
+is assigned by client.</p>
+</li>
+<li><p><cite>group</cite></p>
+<p>String identifier by which components are grouped while blessing
+calculation algorithm is applied (see <a class="reference internal" href="#blessing-algorithm">Blessing algorithm</a>). This
+property is assigned by client.</p>
+</li>
+<li><p><cite>data</cite></p>
+<p>JSON serializable data representing arbitrary information that
+correspond to the component. This property is assigned by client.</p>
+</li>
+<li><p><cite>rank</cite></p>
+<p>Component’s rank - used by <a class="reference internal" href="#blessing-algorithm">Blessing algorithm</a>. This property is
+initially assigned by local Monitor Server. Changes of this property
+value is available as part of local Monitor Server’s UI.</p>
+</li>
+<li><p><cite>blessing_req</cite></p>
+<p>Blessing request assigned and changed exclusively by master
+Monitor Server (see <a class="reference internal" href="#component-lifetime">Component lifetime</a>). It consists of two optional
+properties:</p>
+<ul class="simple">
+<li><p><cite>token</cite> is optional number, used as unique token with the purpose
+of assigning blessing to the component for its primary functionality.
+When <cite>token</cite> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, it means component is not blessed.
+Hereafter this <cite>token</cite> is called request <cite>token</cite>.</p></li>
+<li><p><cite>timestamp</cite> is optional number that represents Unix epoch
+timestamp. It is strongly related to request <cite>token</cite> since
+corresponds to point in time when master Monitor Server assigned
+request <cite>token</cite> to the component. When <cite>token</cite> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, master
+also sets <cite>timestamp</cite> to``None``.</p></li>
+</ul>
+</li>
+<li><p><cite>blessing_res</cite></p>
+<p>Blessing response assigned and changed exclusively by client
+(see <a class="reference internal" href="#component-lifetime">Component lifetime</a>). It consists of two properties:</p>
+<ul class="simple">
+<li><p><cite>token</cite> is optional number, used as unique token as a client’s
+response to master’s blessing request <cite>token</cite>. When response <cite>token</cite>
+is set to exactly the same value as the request <cite>token</cite>, it means
+component is active, that is, it started providing its primary
+functionality. When component is no more active, it revokes this
+<cite>token</cite> by setting it to <code class="docutils literal notranslate"><span class="pre">None</span></code>. Hereafter this <cite>token</cite> is called
+response <cite>token</cite>.</p></li>
+<li><p><cite>ready</cite> is boolean indicating whether component is ready to provide
+its primary functionality.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="master-slave-communication">
+<h2>Master slave communication<a class="headerlink" href="#master-slave-communication" title="Link to this heading">¶</a></h2>
+<p>Horizontal communication between Monitor Servers is hierarchically ordered.
+Each Monitor Server knows its superiors’ addresses. If <code class="docutils literal notranslate"><span class="pre">M1</span> <span class="pre">&gt;</span> <span class="pre">M2</span> <span class="pre">&gt;</span> <span class="pre">M3</span></code>,
+then <code class="docutils literal notranslate"><span class="pre">M1</span></code> doesn’t know any other monitor address; <code class="docutils literal notranslate"><span class="pre">M2</span></code> knows the address
+of <code class="docutils literal notranslate"><span class="pre">M1</span></code>; <code class="docutils literal notranslate"><span class="pre">M3</span></code> knows addresses of <code class="docutils literal notranslate"><span class="pre">M1</span></code> and <code class="docutils literal notranslate"><span class="pre">M2</span></code> in that order.</p>
+<p>Each Monitor Server’s configuration contains zero or more other Monitor
+Server addresses. These other servers are “superior” to the monitor server. A
+monitor server will always try to maintain an active connection with exactly
+one of its superiors. The addresses list is ordered by priority meaning that if
+the Monitor Server isn’t connected to a superior, it tries to connect to the
+first monitor server in the list with <cite>connect_timeout</cite>. If the connection
+fails, it tries the second one and so on. If it can’t connect to any of its
+superiors, it waits for <cite>connect_retry_delay</cite> and retries again from the first
+monitor server in the list. It will retry <cite>connect_retry_count</cite> times before
+it can proclaim itself as master. The connecting to master process continues
+until the Monitor Server connects to its first superior, even if the Monitor
+Server is master or connection to some other superior is established.
+Connection parameters <cite>connect_timeout</cite>, <cite>connect_retry_delay</cite> and
+<cite>connect_retry_count</cite> are defined with configuration.</p>
+<p>Once a slave Monitor Server connects to the Master Monitor server it sends its
+local state to the master and keeps notifying the master about any change in
+its local state while the connection is active. The master gathers all local
+states and generates its global state which it then transmits to all its
+slaves and keeps notifying them of any change. Global state contains information
+from all components received from local states except for those where
+component’s name or group are not set. Master also identifies each
+Monitor Server with unique monitor identifier (<cite>mid</cite>) which is provided to
+slave together with global state. It is important to note that only master
+Monitor Server calculates blessing request <cite>blessing_req</cite> for each component.</p>
+<p>Every Monitor Server is responsible for starting master listening socket
+immediately after startup. While Monitor Server isn’t operating in master mode,
+all connections made to master listening socket will be closed immediately
+after their establishment - this behavior will indicate to connecting Monitor
+Server that its superior is not currently master.</p>
+<p>Messages used in master slave communications are defined in <cite>HatMonitor</cite> SBS
+module (see <a class="reference internal" href="#chatter-messages">Chatter messages</a>). These messages are:</p>
+<blockquote>
+<div><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head" rowspan="2"><p>Message</p></th>
+<th class="head" colspan="3"><p>Conversation</p></th>
+<th class="head" rowspan="2"><p>Direction</p></th>
+</tr>
+<tr class="row-even"><th class="head"><p>First</p></th>
+<th class="head"><p>Last</p></th>
+<th class="head"><p>Token</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-odd"><td><p>MsgSlave</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>s &gt; m</p></td>
+</tr>
+<tr class="row-even"><td><p>MsgMaster</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>m &gt; s</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></blockquote>
+<p>where <cite>s</cite> &gt; <cite>m</cite> represents slave to master communication and <cite>m</cite> &gt; <cite>s</cite>
+represents master to slave communication. When new connection is established,
+master should immediately associate new <cite>mid</cite> with connection and wait for
+<cite>MsgSlave</cite> sent by slave. After master receives <cite>MsgSlave</cite> and calculates
+new global state, it will send <cite>MsgMaster</cite> to slave. Once initial exchange
+of <cite>MsgSlave</cite> followed by <cite>MsgMaster</cite> finished, each communicating entity
+(master or slave) should send new state message (<cite>MsgMaster</cite> or <cite>MsgSlave</cite>) if
+any data obtained from <cite>MsgSlave</cite> or <cite>MsgMaster</cite> changes. Sending of
+<cite>MsgMaster</cite> and <cite>MsgSlave</cite> should be implemented independent of receiving
+messages from associated entity.</p>
+</section>
+<section id="server-client-communication">
+<h2>Server client communication<a class="headerlink" href="#server-client-communication" title="Link to this heading">¶</a></h2>
+<p>Vertical communication between client and server enables bidirectional
+asynchronous exchange of component information data. Client is responsible
+for providing <cite>name</cite>, <cite>group</cite>, <cite>data</cite> and <cite>blessing_res</cite> properties initially
+and on every change. Server provides global state to each connected client and
+each client’s component id (<cite>cid</cite>) and monitor id (<cite>mid</cite>). If any part of
+state available to server changes (including token changes), server sends
+updated state to all clients. Client can also request change for information
+provided to server at any time.</p>
+<p>Messages used in server client communications are defined in <cite>HatMonitor</cite> SBS
+module (see <a class="reference internal" href="#chatter-messages">Chatter messages</a>). These messages are:</p>
+<blockquote>
+<div><div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head" rowspan="2"><p>Message</p></th>
+<th class="head" colspan="3"><p>Conversation</p></th>
+<th class="head" rowspan="2"><p>Direction</p></th>
+</tr>
+<tr class="row-even"><th class="head"><p>First</p></th>
+<th class="head"><p>Last</p></th>
+<th class="head"><p>Token</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-odd"><td><p>MsgClient</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>c &gt; s</p></td>
+</tr>
+<tr class="row-even"><td><p>MsgServer</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>s &gt; c</p></td>
+</tr>
+<tr class="row-odd"><td><p>MsgClose</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>T</p></td>
+<td><p>s &gt; c</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div></blockquote>
+<p>where <cite>c</cite> &gt; <cite>s</cite> represents client to server communication and <cite>s</cite> &gt;
+<cite>c</cite> represents server to client communication. When new connection is
+established, each communicating entity (server or client) server immediately
+sends initial state message (<cite>MsgServer</cite> or <cite>MsgClient</cite>) and should send new
+state messages when any data obtained from <cite>MsgServer</cite> or <cite>MsgClient</cite> changes.
+Sending of <cite>MsgServer</cite> and <cite>MsgClient</cite> should be implemented independent of
+receiving messages from associated entity. Implementation of server should not
+be dependent on receiving initial <cite>MsgClient</cite> and should continue sending
+<cite>MsgServer</cite> on every state change even if no <cite>MsgClient</cite> is received.</p>
+<p>Server always sends last known global state calculated by master monitor
+server (even in case when connection to master is not established).</p>
+<p>Client can close connection at any time. If server wishes to terminate
+connection, it should send <cite>MsgClose</cite> message to client. Once client receives
+<cite>MsgClose</cite> it should close connection as soon as possible (with possibility
+of local resource cleanup). If client doesn’t close connection after
+configured timeout, server can close connection.</p>
+</section>
+<section id="component-lifetime">
+<h2>Component lifetime<a class="headerlink" href="#component-lifetime" title="Link to this heading">¶</a></h2>
+<p>For most components, connection to local Monitor Server is mandatory for
+providing implemented functionality. Because of this, component usually connects
+to local Monitor Server during startup and preserves this active connection
+during entire component run lifetime. If this connection is closed for any
+reason, process also terminates. This behavior is not mandated.</p>
+<p>Components which connect to Monitor Server participate in redundancy
+supervised by master Monitor Server. Redundancy utilizes two tokens, the one
+from <cite>blessing_req</cite>, said as request <cite>token</cite>, and the other from
+<cite>blessing_res</cite>, said as response <cite>token</cite>:</p>
+<ul>
+<li><p>request <cite>token</cite></p>
+<p>This token is controlled exclusively by master Monitor Server.
+Master gives “blessing for work” to a component by setting this
+token to an integer number. On the other hand, it revokes blessing
+by setting this token to <code class="docutils literal notranslate"><span class="pre">None</span></code>. If connection to master is not
+established, token’s value equals to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</li>
+<li><p>response <cite>token</cite></p>
+<p>This token is controlled exclusively by client. Upon receiving request
+<cite>token</cite> component starts providing its functionality and sets
+response <cite>token</cite> to match the request <cite>token</cite> in order to signalize
+its activity. If, at any time, component stops its activity, it revokes
+token by setting it to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</li>
+</ul>
+<p>While component information has request and response tokens with the same
+same value, it means component is active. If, at any time,
+component losses blessing, that is, master revokes request <cite>token</cite>, component
+starts with stopping its activity. When component activity is stopped it
+indicates it by revoking the response <cite>token</cite>.</p>
+<p>On behalf of <cite>ready</cite> property of <cite>blessing_res</cite>, each component informs
+whether it is ready to provide its functionality based on global state provided
+by local Monitor Server. While component is not ready, one does not expect that
+it gets the request <cite>token</cite>. In any case, component that is not <cite>ready</cite> never
+sets its response <cite>token</cite>.</p>
+<p>Responsibility of each Monitor Server is to cache last known <cite>blessing_req</cite>
+associated with it’s local components. This information is provided to
+master Monitor Server thus enabling transfer of <cite>blessing_req</cite> state in cases
+of master switchover procedures.</p>
+</section>
+<section id="blessing-algorithm">
+<h2>Blessing algorithm<a class="headerlink" href="#blessing-algorithm" title="Link to this heading">¶</a></h2>
+<p>Blessing algorithm determines value of each component’s request <cite>token</cite> and
+associated <cite>timestamp</cite>. This calculation is performed on master Monitor Server
+and should be executed each time any part of global state changes. This
+calculation should be integrated part of state change and thus provide global
+state consistency. That is, one can say that master Monitor Server blessed a
+component when it set its request <cite>token</cite> to an integer value.</p>
+<p>Monitor Server implements multiple algorithms for calculating value of request
+token. Each component <cite>group</cite> can have associated different blessing algorithm
+and all groups that don’t have associated blessing algorithm use default
+algorithm. Group’s associated algorithms and default algorithm are provided
+to Monitor Server as configuration parameters during its startup.</p>
+<p>Calculation of request <cite>token</cite> values is based only on previous global state
+and new changes that triggered execution of blessing algorithm.</p>
+<p>Currently supported algorithms:</p>
+<ul>
+<li><p>BLESS_ALL</p>
+<p>This simple algorithm provides blessing to all components in associated
+group that are ready (<cite>ready</cite> flag of <cite>blessing_res</cite> is <code class="docutils literal notranslate"><span class="pre">True</span></code>).
+Blessing is revoked only when <cite>ready</cite> flag is set to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</li>
+<li><p>BLESS_ONE</p>
+<p>In each group with this algorithm associated, there can be only one
+highlander and only one blessed component. Only components that are
+ready (<cite>ready</cite> flag of <cite>blessing_res</cite> is <code class="docutils literal notranslate"><span class="pre">True</span></code>) are considered as
+candidates for receiving blessing. In case there is no any ready
+component, this algorithm will not give blessing to any component.</p>
+<p>For determining which component receives the blessing, multiple ordered
+criteria are applied sequentially until there is only one component
+left. If any of the criteria is satisfied by more than one component,
+the next criteria is applied. Criteria are the following, respectively:</p>
+<ol class="arabic simple">
+<li><p>the mathematically lowest <cite>rank</cite></p></li>
+<li><p>request <cite>token</cite> previously set</p></li>
+<li><p>the lowest blessing <cite>timestamp</cite></p></li>
+<li><p>the lowest <cite>mid</cite></p></li>
+</ol>
+<p>Finally, when algorithm defined the component to be blessed, if that
+component doesn’t already have request token equal to its response
+token, and there is another component in the group with response token,
+<cite>master</cite> does not bless any component. It waits until all the
+components from the group have revoked their response tokens, and only
+then, issues new request token to the chosen component. In case
+component to be blessed already has request token equal to its response
+token, <cite>master</cite> keeps its request token even if there exists a
+component with response token in the same group.</p>
+</li>
+</ul>
+</section>
+<section id="components-rank">
+<h2>Components rank<a class="headerlink" href="#components-rank" title="Link to this heading">¶</a></h2>
+<p>Association of component’s <cite>rank</cite> is responsibility of component’s local Monitor
+Server for all of its local components. Monitor Server should associate same
+rank as was last rank value associated with previously active client connection
+with same <cite>name</cite> and <cite>group</cite> values as newly established connection. If such
+previously active connection does not exist, default rank value, as specified
+by Monitor Server’s configuration, is applied. After initial rank value is
+associated with client and its <cite>ComponentInfo</cite>, local Monitor Servers can
+later change rank’s value. These changes should be cached by local Monitor
+Servers in case connection to component is lost and same component tries to
+establish new connection. This cache is maintained for duration of single
+Monitor Server process execution and is not persisted between different Monitor
+Server processes.</p>
+</section>
+<section id="user-interface">
+<h2>User interface<a class="headerlink" href="#user-interface" title="Link to this heading">¶</a></h2>
+<p>As secondary functionality, Monitor Server provides web-based user interface
+for monitoring global components state and controlling component’s rank.
+Implementation of this functionality is split into server-side web backend and
+web frontend exchanging communication messages based on juggler communication
+protocol.</p>
+<section id="server-state">
+<h3>Server state<a class="headerlink" href="#server-state" title="Link to this heading">¶</a></h3>
+<p>Backend provides to frontends all information that is made available by server
+to clients. This information is provided as continuously updated server state.</p>
+<p>State structure is defined by JSON schema
+<code class="docutils literal notranslate"><span class="pre">hat-monitor://juggler.yaml#/$defs/state</span></code>.</p>
+</section>
+<section id="request-response">
+<h3>Request/response<a class="headerlink" href="#request-response" title="Link to this heading">¶</a></h3>
+<p>Juggler request/response communication is used primary for enabling user
+control of components’ ranks.</p>
+<p>Request data structures are defined by JSON schema
+<code class="docutils literal notranslate"><span class="pre">hat-monitor://juggler.yaml#/$defs/request</span></code>.</p>
+<p>In case of successful request execution, response data is <code class="docutils literal notranslate"><span class="pre">null</span></code>.</p>
+</section>
+</section>
+<section id="future-features">
+<h2>Future features<a class="headerlink" href="#future-features" title="Link to this heading">¶</a></h2>
+<div class="admonition-todo admonition" id="id1">
+<p class="admonition-title">Todo</p>
+<ul>
+<li><p>optional connection to monitor/event server</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>mapping of current status to events</p></li>
+<li><p>listening for control events</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+</section>
+<section id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">¶</a></h2>
+<p>Documentation is available as part of generated API reference:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="py_api/index.html">Python hat.monitor module</a></p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="chatter-messages">
+<h2>Chatter messages<a class="headerlink" href="#chatter-messages" title="Link to this heading">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>module HatObserver
+
+MsgClient = Record {
+    name:         String
+    group:        String
+    data:         String
+    blessingRes:  BlessingRes
+}
+
+MsgServer = Record {
+    cid:         Integer
+    mid:         Integer
+    components:  Array(ComponentInfo)
+}
+
+MsgClose = None
+
+MsgSlave = Record {
+    components:  Array(ComponentInfo)
+}
+
+MsgMaster = Record {
+    mid:         Integer
+    components:  Array(ComponentInfo)
+}
+
+ComponentInfo = Record {
+    cid:          Integer
+    mid:          Integer
+    name:         Optional(String)
+    group:        Optional(String)
+    data:         String
+    rank:         Integer
+    blessingReq:  BlessingReq
+    blessingRes:  BlessingRes
+}
+
+BlessingReq = Record {
+    token:      Optional(Integer)
+    timestamp:  Optional(Float)
+}
+
+BlessingRes = Record {
+    token:  Optional(Integer)
+    ready:  Boolean
+}
+</pre></div>
+</div>
+</section>
+<section id="juggler-definitions">
+<h2>Juggler definitions<a class="headerlink" href="#juggler-definitions" title="Link to this heading">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">$schema</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://json-schema.org/draft/2020-12/schema&quot;</span>
+<span class="nt">$id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-monitor://juggler.yaml&quot;</span>
+<span class="nt">$defs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">state</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">        </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mid</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local_components</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global_components</span>
+<span class="w">        </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">mid</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">            </span><span class="nt">local_components</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">array</span>
+<span class="w">                </span><span class="nt">items</span><span class="p">:</span>
+<span class="w">                    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">                    </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cid</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">name</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">group</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">data</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rank</span>
+<span class="w">                    </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">                        </span><span class="nt">cid</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                        </span><span class="nt">name</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;null&quot;</span>
+<span class="w">                        </span><span class="nt">group</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;null&quot;</span>
+<span class="w">                        </span><span class="nt">rank</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">            </span><span class="nt">global_components</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">array</span>
+<span class="w">                </span><span class="nt">items</span><span class="p">:</span>
+<span class="w">                    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">                    </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cid</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mid</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">name</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">group</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">data</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rank</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blessing_req</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blessing_res</span>
+<span class="w">                    </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">                        </span><span class="nt">cid</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                        </span><span class="nt">mid</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                        </span><span class="nt">name</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;null&quot;</span>
+<span class="w">                        </span><span class="nt">group</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;null&quot;</span>
+<span class="w">                        </span><span class="nt">rank</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                        </span><span class="nt">blessing_req</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">                            </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">token</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">timestamp</span>
+<span class="w">                            </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">                                </span><span class="nt">token</span><span class="p">:</span>
+<span class="w">                                    </span><span class="nt">type</span><span class="p">:</span>
+<span class="w">                                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;null&quot;</span>
+<span class="w">                                </span><span class="nt">timestamp</span><span class="p">:</span>
+<span class="w">                                    </span><span class="nt">type</span><span class="p">:</span>
+<span class="w">                                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">float</span>
+<span class="w">                                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;null&quot;</span>
+<span class="w">                        </span><span class="nt">blessing_res</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">                            </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">token</span>
+<span class="w">                                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ready</span>
+<span class="w">                            </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">                                </span><span class="nt">token</span><span class="p">:</span>
+<span class="w">                                    </span><span class="nt">type</span><span class="p">:</span>
+<span class="w">                                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;null&quot;</span>
+<span class="w">                                </span><span class="nt">ready</span><span class="p">:</span>
+<span class="w">                                    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="w">    </span><span class="nt">request</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">set_rank</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">            </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cid</span>
+<span class="w">                </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rank</span>
+<span class="w">            </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">cid</span><span class="p">:</span>
+<span class="w">                    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                </span><span class="nt">rank</span><span class="p">:</span>
+<span class="w">                    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">$schema</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://json-schema.org/draft/2020-12/schema&quot;</span>
+<span class="nt">$id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-monitor://server.yaml&quot;</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="nt">required</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_algorithm</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">group_algorithms</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">server</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">master</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">slave</span>
+<span class="nt">properties</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">const</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">monitor</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">configuration type identification</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">component version</span>
+<span class="w">    </span><span class="nt">log</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">$ref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-json://logging.yaml&quot;</span>
+<span class="w">    </span><span class="nt">default_algorithm</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">$ref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-monitor://server.yaml#/$defs/algorithm&quot;</span>
+<span class="w">    </span><span class="nt">group_algorithms</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">            </span><span class="no">keys represent group names</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">        </span><span class="nt">patternProperties</span><span class="p">:</span>
+<span class="w">            </span><span class="s">&quot;.+&quot;</span><span class="p p-Indicator">:</span>
+<span class="w">                </span><span class="nt">$ref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-monitor://server.yaml#/$defs/algorithm&quot;</span>
+<span class="w">    </span><span class="nt">server</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">$ref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-monitor://server.yaml#/$defs/server&quot;</span>
+<span class="w">    </span><span class="nt">master</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">$ref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-monitor://server.yaml#/$defs/master&quot;</span>
+<span class="w">    </span><span class="nt">slave</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">$ref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-monitor://server.yaml#/$defs/slave&quot;</span>
+<span class="w">    </span><span class="nt">ui</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">$ref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hat-monitor://server.yaml#/$defs/ui&quot;</span>
+<span class="nt">$defs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">server</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Listening Orchestrator Server</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">        </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">host</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">port</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default_rank</span>
+<span class="w">        </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">host</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;127.0.0.1&#39;</span>
+<span class="w">            </span><span class="nt">port</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">23010</span>
+<span class="w">            </span><span class="nt">default_rank</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">    </span><span class="nt">master</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Listening Orchestrator Master</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">        </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">host</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">port</span>
+<span class="w">        </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">host</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;127.0.0.1&#39;</span>
+<span class="w">            </span><span class="nt">port</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">23011</span>
+<span class="w">    </span><span class="nt">slave</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">        </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">parents</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">connect_timeout</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">connect_retry_count</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">connect_retry_delay</span>
+<span class="w">        </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">parents</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">parent addresses</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">array</span>
+<span class="w">                </span><span class="nt">items</span><span class="p">:</span>
+<span class="w">                    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">                    </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">host</span>
+<span class="w">                        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">port</span>
+<span class="w">                    </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">                        </span><span class="nt">host</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                        </span><span class="nt">port</span><span class="p">:</span>
+<span class="w">                            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                            </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">23011</span>
+<span class="w">            </span><span class="nt">connect_timeout</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">number</span>
+<span class="w">            </span><span class="nt">connect_retry_count</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">            </span><span class="nt">connect_retry_delay</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">number</span>
+<span class="w">    </span><span class="nt">ui</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Listening UI Web Server</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">        </span><span class="nt">required</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">host</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">port</span>
+<span class="w">        </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">host</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;127.0.0.1&#39;</span>
+<span class="w">            </span><span class="nt">port</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="w">                </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">23022</span>
+<span class="w">            </span><span class="nt">htpasswd</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">                </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">                    </span><span class="no">basic authentication users</span>
+<span class="w">    </span><span class="nt">algorithm</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">enum</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BLESS_ALL</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BLESS_ONE</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2020-2025, Hat Open AUTHORS
+            </div>
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Monitor Server</a><ul>
+<li><a class="reference internal" href="#running">Running</a></li>
+<li><a class="reference internal" href="#communication-model">Communication model</a></li>
+<li><a class="reference internal" href="#component-information">Component information</a></li>
+<li><a class="reference internal" href="#master-slave-communication">Master slave communication</a></li>
+<li><a class="reference internal" href="#server-client-communication">Server client communication</a></li>
+<li><a class="reference internal" href="#component-lifetime">Component lifetime</a></li>
+<li><a class="reference internal" href="#blessing-algorithm">Blessing algorithm</a></li>
+<li><a class="reference internal" href="#components-rank">Components rank</a></li>
+<li><a class="reference internal" href="#user-interface">User interface</a><ul>
+<li><a class="reference internal" href="#server-state">Server state</a></li>
+<li><a class="reference internal" href="#request-response">Request/response</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#future-features">Future features</a></li>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
+<li><a class="reference internal" href="#chatter-messages">Chatter messages</a></li>
+<li><a class="reference internal" href="#juggler-definitions">Juggler definitions</a></li>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
+    </body>
+</html>
