@@ -8,7 +8,6 @@ from hat.doit.js import (ESLintConf,
                          run_eslint)
 from hat.doit.py import (get_task_build_wheel,
                          get_task_run_pytest,
-                         get_task_create_pip_requirements,
                          run_flake8)
 
 
@@ -22,8 +21,7 @@ __all__ = ['task_clean_all',
            'task_ts',
            'task_static',
            'task_json_schema_repo',
-           'task_sbs_repo',
-           'task_pip_requirements']
+           'task_sbs_repo']
 
 
 build_dir = Path('build')
@@ -144,8 +142,3 @@ def task_sbs_repo():
     """Generate JSON Schema Repository"""
     return common.get_task_sbs_repo(schemas_sbs_dir.rglob('*.sbs'),
                                     sbs_repo_path)
-
-
-def task_pip_requirements():
-    """Create pip requirements"""
-    return get_task_create_pip_requirements()

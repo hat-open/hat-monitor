@@ -1,18 +1,18 @@
 [project]
 name = "hat-monitor"
-version = "0.8.20"
+version = "0.8.21"
 description = "Hat monitor"
 readme = "README.rst"
 requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 dependencies = [
     "appdirs ~=1.4.4",
-    "hat-aio ~=0.7.12",
-    "hat-drivers ~=0.10.0",
-    "hat-json ~=0.6.2",
-    "hat-juggler ~=0.7.1",
-    "hat-sbs ~=0.7.5",
-    "hat-util ~=0.6.19",
+    "hat-aio ~=0.7.13",
+    "hat-drivers ~=0.10.1",
+    "hat-json ~=0.6.8",
+    "hat-juggler ~=0.7.2",
+    "hat-sbs ~=0.7.6",
+    "hat-util ~=0.6.22",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -27,15 +27,30 @@ Homepage = "http://hat-open.com"
 Repository = "https://github.com/hat-open/hat-monitor.git"
 Documentation = "http://hat-monitor.hat-open.com"
 
-[project.optional-dependencies]
+[dependency-groups]
+run = [
+    "appdirs ~=1.4.4",
+    "hat-aio ~=0.7.13",
+    "hat-drivers ~=0.10.1",
+    "hat-json ~=0.6.8",
+    "hat-juggler ~=0.7.2",
+    "hat-sbs ~=0.7.6",
+    "hat-util ~=0.6.22",
+]
+build = [
+    "hat-doit ~=0.16.4",
+    "hat-json ~=0.6.8",
+    "hat-sbs ~=0.7.6",
+]
 dev = [
-    "hat-doit ~=0.16.2",
-    "psutil >=5.9.5",
+    {include-group = "run"},
+    {include-group = "build"},
+    "psutil >=7.2.2",
     "sphinxcontrib-programoutput >=0.17",
 ]
 
 [build-system]
-requires = ["hat-doit ~=0.16.2"]
+requires = ["hat-doit ~=0.16.4"]
 build-backend = "hat.doit.pep517"
 
 [tool.pytest.ini_options]
