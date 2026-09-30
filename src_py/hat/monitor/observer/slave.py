@@ -5,7 +5,7 @@ import typing
 
 from hat import aio
 from hat.drivers import chatter
-from hat.drivers import tcp
+from hat.drivers import net
 
 from hat.monitor.observer import common
 
@@ -22,7 +22,7 @@ class State(typing.NamedTuple):
     global_components: list[common.ComponentInfo]
 
 
-async def connect(addr: tcp.Address,
+async def connect(addr: net.StreamAddress,
                   *,
                   local_components: list[common.ComponentInfo] = [],
                   state_cb: StateCb | None = None,

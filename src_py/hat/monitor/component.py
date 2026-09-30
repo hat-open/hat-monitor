@@ -6,7 +6,7 @@ import typing
 
 from hat import aio
 from hat import json
-from hat.drivers import tcp
+from hat.drivers import net
 
 from hat.monitor import common
 from hat.monitor.observer import client
@@ -31,7 +31,7 @@ CloseReqCb: typing.TypeAlias = aio.AsyncCallable[['Component'], None]
 """Close request callback"""
 
 
-async def connect(addr: tcp.Address,
+async def connect(addr: net.StreamAddress,
                   name: str,
                   group: str,
                   runner_cb: RunnerCb,

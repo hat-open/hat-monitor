@@ -1,6 +1,6 @@
 [project]
 name = "hat-monitor"
-version = "0.8.21"
+version = "0.8.23"
 description = "Hat monitor"
 readme = "README.rst"
 requires-python = ">=3.10"
@@ -8,7 +8,7 @@ license = {text = "Apache-2.0"}
 dependencies = [
     "appdirs ~=1.4.4",
     "hat-aio ~=0.7.13",
-    "hat-drivers ~=0.10.1",
+    "hat-drivers ~=0.10.9",
     "hat-json ~=0.6.8",
     "hat-juggler ~=0.7.2",
     "hat-sbs ~=0.7.6",

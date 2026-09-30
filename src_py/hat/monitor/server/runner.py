@@ -6,7 +6,7 @@ import logging
 
 from hat import aio
 from hat import json
-from hat.drivers import tcp
+from hat.drivers import net
 
 import hat.monitor.observer.master
 import hat.monitor.observer.server
@@ -28,7 +28,7 @@ async def create(conf: json.Data) -> 'Runner':
     runner._ui = None
     runner._slave = None
     runner._slave_conf = conf['slave']
-    runner._slave_parents = [tcp.Address(i['host'], i['port'])
+    runner._slave_parents = [net.TcpAddress(i['host'], i['port'])
                              for i in conf['slave']['parents']]
     runner._default_algorithm = hat.monitor.server.blessing.Algorithm(
         conf['default_algorithm'])
@@ -40,14 +40,14 @@ async def create(conf: json.Data) -> 'Runner':
     try:
         mlog.debug('starting server')
         runner._server = await hat.monitor.observer.server.listen(
-            tcp.Address(conf['server']['host'], conf['server']['port']),
+            net.TcpAddress(conf['server']['host'], conf['server']['port']),
             default_rank=conf['server']['default_rank'],
             state_cb=runner._on_server_state)
         runner._bind_resource(runner._server)
 
         mlog.debug('starting master')
         runner._master = await hat.monitor.observer.master.listen(
-            tcp.Address(conf['master']['host'], conf['master']['port']),
+            net.TcpAddress(conf['master']['host'], conf['master']['port']),
             global_components_cb=runner._on_master_global_components,
             blessing_cb=runner._calculate_blessing)
         runner._bind_resource(runner._master)

@@ -9,7 +9,7 @@ from hat import aio
 from hat import json
 from hat import util
 from hat.drivers import chatter
-from hat.drivers import tcp
+from hat.drivers import net
 
 from hat.monitor.observer import common
 
@@ -27,7 +27,7 @@ class State(typing.NamedTuple):
     global_components: list[common.ComponentInfo]
 
 
-async def listen(addr: tcp.Address,
+async def listen(addr: net.StreamAddress,
                  *,
                  default_rank: int = 1,
                  close_timeout: float = 3,
