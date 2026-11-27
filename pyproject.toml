@@ -1,22 +1,21 @@
 [project]
 name = "hat-monitor"
-version = "0.8.23"
+version = "0.8.24"
 description = "Hat monitor"
 readme = "README.rst"
 requires-python = ">=3.10"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 dependencies = [
     "appdirs ~=1.4.4",
-    "hat-aio ~=0.7.13",
-    "hat-drivers ~=0.10.9",
-    "hat-json ~=0.6.8",
-    "hat-juggler ~=0.7.2",
-    "hat-sbs ~=0.7.6",
-    "hat-util ~=0.6.22",
+    "hat-aio ~=0.7.15",
+    "hat-drivers ~=0.10.15",
+    "hat-json ~=0.6.9",
+    "hat-juggler ~=0.7.8",
+    "hat-sbs ~=0.7.7",
+    "hat-util ~=0.6.25",
 ]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License"
+    "Programming Language :: Python :: 3"
 ]
 
 [project.scripts]
@@ -30,17 +29,17 @@ Documentation = "http://hat-monitor.hat-open.com"
 [dependency-groups]
 run = [
     "appdirs ~=1.4.4",
-    "hat-aio ~=0.7.13",
-    "hat-drivers ~=0.10.9",
-    "hat-json ~=0.6.8",
-    "hat-juggler ~=0.7.2",
-    "hat-sbs ~=0.7.6",
-    "hat-util ~=0.6.22",
+    "hat-aio ~=0.7.15",
+    "hat-drivers ~=0.10.15",
+    "hat-json ~=0.6.9",
+    "hat-juggler ~=0.7.8",
+    "hat-sbs ~=0.7.7",
+    "hat-util ~=0.6.25",
 ]
 build = [
-    "hat-doit ~=0.16.4",
-    "hat-json ~=0.6.8",
-    "hat-sbs ~=0.7.6",
+    "hat-doit ~=0.17.1",
+    "hat-json ~=0.6.9",
+    "hat-sbs ~=0.7.7",
 ]
 dev = [
     {include-group = "run"},
@@ -50,7 +49,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["hat-doit ~=0.16.4"]
+requires = ["hat-doit ~=0.17.1"]
 build-backend = "hat.doit.pep517"
 
 [tool.pytest.ini_options]

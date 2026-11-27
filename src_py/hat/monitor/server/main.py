@@ -43,8 +43,6 @@ def main():
 
 def sync_main(conf: json.Data):
     """Sync main entry point"""
-    aio.init_asyncio()
-
     validator = json.DefaultSchemaValidator(common.json_schema_repo)
     validator.validate('hat-monitor://server.yaml', conf)
 
